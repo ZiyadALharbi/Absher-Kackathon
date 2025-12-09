@@ -1,0 +1,16 @@
+# AbsherThon - Python Requirements
+# This project uses minimal Python dependencies
+
+# Core Requirements
+# Python 3.8+ (built-in http.server module)
+# No external Python packages required for the main dashboard
+
+# Optional: For development and testing
+# If you want to use a more advanced server, you can install:
+# flask>=2.3.0
+# gunicorn>=21.0.0
+
+# Note: The main application runs on Python's built-in http.server
+# No pip install needed for basic functionality
+
+# For the Next.js version (aun-agent/), see package.json instead

@@ -1,0 +1,342 @@
+[
+  {
+     "name" : "اوبل",
+     "code" : "opel"
+  },
+  {
+     "name" : "اودي",
+     "code" : "audi"
+  },
+  {
+     "name" : "اولدزموبيل",
+     "code" : "oldsmobile"
+  },
+  {
+     "name" : "ايسوزو",
+     "code" : "isuzu"
+  },
+  {
+     "name" : "برتون",
+     "code" : "proton"
+  },
+  {
+     "name" : "بليموث",
+     "code" : "plymouth"
+  },
+  {
+     "name" : "بونتياك",
+     "code" : "pontiac"
+  },
+  {
+     "name" : "بيوك",
+     "code" : "buick"
+  },
+  {
+     "name" : "بي ام دبليو",
+     "code" : "bmw"
+  },
+  {
+     "name" : "بيجو",
+     "code" : "peugeot"
+  },
+  {
+     "name" : "تويوتا",
+     "code" : "toyota"
+  },
+  {
+     "name" : "جمس",
+     "code" : "gmc"
+  },
+  {
+     "name" : "جيب",
+     "code" : "jeep"
+  },
+  {
+     "name" : "دودج",
+     "code" : "dodge"
+  },
+  {
+     "name" : "رولزرويس",
+     "code" : "rolls_royce"
+  },
+  {
+     "name" : "ساب",
+     "code" : "saab"
+  },
+  {
+     "name" : "سكودا",
+     "code" : "skoda"
+  },
+  {
+     "name" : "سوزوكي",
+     "code" : "suzuki"
+  },
+  {
+     "name" : "سيات",
+     "code" : "seat"
+  },
+  {
+     "name" : "شيفورلية",
+     "code" : "chevrolet"
+  },
+  {
+     "name" : "فورد",
+     "code" : "ford"
+  },
+  {
+     "name" : "فولفو",
+     "code" : "volvo"
+  },
+  {
+     "name" : "فيات",
+     "code" : "fiat"
+  },
+  {
+     "name" : "كاديلاك",
+     "code" : "cadillac"
+  },
+  {
+     "name" : "كرايسلر",
+     "code" : "chrysler"
+  },
+  {
+     "name" : "كيا",
+     "code" : "kia"
+  },
+  {
+     "name" : "مازدا",
+     "code" : "mazda"
+  },
+  {
+     "name" : "مان",
+     "code" : "man"
+  },
+  {
+     "name" : "متسوبيشي",
+     "code" : "mitsubishi"
+  },
+  {
+     "name" : "مرسيدس",
+     "code" : "mercedes_benz"
+  },
+  {
+     "name" : "نيسان",
+     "code" : "nissan"
+  },
+  {
+     "name" : "هونداي",
+     "code" : "hyundai"
+  },
+  {
+     "name" : "هوندا",
+     "code" : "honda"
+  },
+  {
+     "name" : "ياماها",
+     "code" : "yamaha"
+  },
+  {
+     "name" : "فولكس واجن",
+     "code" : "vw"
+  },
+  {
+     "name" : "انفنتي",
+     "code" : "infiniti"
+  },
+  {
+     "name" : "جاكوار",
+     "code" : "jaguar"
+  },
+  {
+     "name" : "لكزس",
+     "code" : "lexus"
+  },
+  {
+     "name" : "سامسونج",
+     "code" : "samsung"
+  },
+  {
+     "name" : "هينو",
+     "code" : "hino"
+  },
+  {
+     "name" : "سوبارو",
+     "code" : "subaru"
+  },
+  {
+     "name" : "دايو",
+     "code" : "daewoo"
+  },
+  {
+     "name" : "ديهاتسو",
+     "code" : "daihatsu"
+  },
+  {
+     "name" : "لاندروفر",
+     "code" : "land_rover"
+  },
+  {
+     "name" : "فيراري",
+     "code" : "ferrari"
+  },
+  {
+     "name" : "ميزراتي",
+     "code" : "maserati"
+  },
+  {
+     "name" : "لامبرغيني",
+     "code" : "lamborghini"
+  },
+  {
+     "name" : "انترناشونال",
+     "code" : "international"
+  },
+  {
+     "name" : "رينو",
+     "code" : "renault"
+  },
+  {
+     "name" : "همر",
+     "code" : "hummer"
+  },
+  {
+     "name" : "رانج روفر",
+     "code" : "range_rover"
+  },
+  {
+     "name" : "ستروين",
+     "code" : "citroen"
+  },
+  {
+     "name" : "بورش",
+     "code" : "porsche"
+  },
+  {
+     "name" : "لادا",
+     "code" : "lada"
+  },
+  {
+     "name" : "سكانيا",
+     "code" : "scania"
+  },
+  {
+     "name" : "كنورث",
+     "code" : "kenworth"
+  },
+  {
+     "name" : "تاتا",
+     "code" : "tata"
+  },
+  {
+     "name" : "هارلي",
+     "code" : "harley"
+  },
+  {
+     "name" : "داف",
+     "code" : "daf"
+  },
+  {
+     "name" : "روفر",
+     "code" : "rover"
+  },
+  {
+     "name" : "استون مارتن",
+     "code" : "aston_martin"
+  },
+  {
+     "name" : "سانغ يانغ",
+     "code" : "ssang_yong"
+  },
+  {
+     "name" : "الفاروميو",
+     "code" : "alfa_romeo"
+  },
+  {
+     "name" : "افيكو",
+     "code" : "iveco"
+  },
+  {
+     "name" : "هيتاشي",
+     "code" : "hitachi"
+  },
+  {
+     "name" : "لا نسيا",
+     "code" : "lancia"
+  },
+  {
+     "name" : "هودسون",
+     "code" : "hudson"
+  },
+  {
+     "name" : "جي سي بي",
+     "code" : "jcb"
+  },
+  {
+     "name" : "فريت لا يز",
+     "code" : "freightliner"
+  },
+  {
+     "name" : "كاواساكي",
+     "code" : "kawasaki"
+  },
+  {
+     "name" : "ترايمف",
+     "code" : "triumph"
+  },
+  {
+     "name" : "جريت وول",
+     "code" : "great_wall"
+  },
+  {
+     "name" : "سانج يونج",
+     "code" : "ssang_yong"
+  },
+  {
+     "name" : "بنتلي",
+     "code" : "bentley"
+  },
+  {
+     "name" : "بيتربلت",
+     "code" : "peterbilt"
+  },
+  {
+     "name" : "ديملركرايسلر",
+     "code" : "daimler"
+  },
+  {
+     "name" : "بويك",
+     "code" : "buick"
+  },
+  {
+     "name" : "لنكولن",
+     "code" : "lincoln"
+  },
+  {
+     "name" : "أم جي",
+     "code" : "mg"
+  },
+  {
+     "name" : "تي في أر",
+     "code" : "tvr"
+  },
+  {
+     "name" : "لوتس",
+     "code" : "lotus"
+  },
+  {
+     "name" : "فريجلينر",
+     "code" : "freightliner"
+  },
+  {
+     "name" : "ميركورى",
+     "code" : "mercury"
+  },
+  {
+     "name" : "داتسن",
+     "code" : "datsun"
+  },
+  {
+     "name" : "مينى",
+     "code" : "mini"
+  }
+]

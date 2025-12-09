@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرئيسية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        /* Custom scrollbar to match clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#ffffff',
+                        foreground: '#1f2937',
+                        primary: '#00663d', // Absher Green
+                        secondary: '#f3f4f6',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
+            <!-- Right Section (Vision 2030 + User) - Placed first for RTL visual Right -->
+            <div class="flex items-center gap-6">
+                <div class="w-8 h-8 bg-green-600 rounded-full"></div> <!-- Absher Logo placeholder -->
+                <div class="flex flex-col items-end">
+                    <div class="text-xs text-gray-500">VISION</div>
+                    <div class="text-2xl font-bold text-gray-800">2030</div>
+                    <div class="text-xs text-gray-600">المملكة العربية السعودية</div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+                        <img src="portal/individuals/assets/images/personal_photo.png" alt="User"
+                            class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Navigation -->
+            <nav class="flex-1 flex items-center justify-center gap-4 mx-8">
+                <div
+                    class="flex flex-col items-center gap-1 px-4 py-2 border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-50 rounded">
+                    <i data-lucide="users" class="w-6 h-6 text-teal-500"></i>
+                    <span class="text-xs text-gray-700 text-center font-medium">لوحة المعلومات</span>
+                </div>
+                <div
+                    class="flex flex-col items-center gap-1 px-4 py-2 border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-50 rounded">
+                    <i data-lucide="home" class="w-6 h-6 text-teal-500"></i>
+                    <span class="text-xs text-gray-700 text-center font-medium">تعديل معلومات المستخدم</span>
+                </div>
+                <div
+                    class="flex flex-col items-center gap-1 px-4 py-2 border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-50 rounded">
+                    <i data-lucide="bell" class="w-6 h-6 text-teal-500"></i>
+                    <span class="text-xs text-gray-700 text-center font-medium">الاشعارات</span>
+                </div>
+                <div
+                    class="flex flex-col items-center gap-1 px-4 py-2 border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-50 rounded">
+                    <i data-lucide="book" class="w-6 h-6 text-teal-500"></i>
+                    <span class="text-xs text-gray-700 text-center font-medium">دليل الخدمات</span>
+                </div>
+                <div
+                    class="flex flex-col items-center gap-1 px-4 py-2 border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-50 rounded">
+                    <i data-lucide="bar-chart-3" class="w-6 h-6 text-teal-500"></i>
+                    <span class="text-xs text-gray-700 text-center font-medium">English</span>
+                </div>
+                <div
+                    class="flex flex-col items-center gap-1 px-4 py-2 border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-50 rounded">
+                    <i data-lucide="chevron-left" class="w-6 h-6 text-teal-500"></i>
+                    <span class="text-xs text-gray-700 text-center font-medium">تسجيل الخروج</span>
+                </div>
+            </nav>
+
+            <!-- Left Logo (Green Seal) -->
+            <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center overflow-hidden">
+                    <!-- <span class="text-white text-2xl font-bold">🌿</span> -->
+                    <img src="portal/individuals/assets/images/logo.svg" alt="Logo"
+                        class="w-full h-full p-2 object-contain bg-white">
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="flex flex-col lg:flex-row gap-6 p-6 max-w-7xl mx-auto">
+
+        <!-- Sidebar (Right Side in Visual, First in DOM for RTL flow if flex-row is used without reverse, wait. 
+             In RTL flex-row: Start is Right. So First Child is Right. 
+             So Sidebar should be First Child.) -->
+        <div class="w-full lg:w-64 space-y-3">
+            <button
+                class="w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border-r-4 transition-all bg-green-50 border-r-green-600">
+                <i data-lucide="zap" class="w-5 h-5 text-green-600"></i>
+                <span class="font-medium text-sm text-green-900">الخدمات الإلكترونية</span>
+            </button>
+            <button
+                class="w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border-r-4 transition-all bg-gray-50 border-r-gray-300 hover:bg-gray-100">
+                <i data-lucide="eye" class="w-5 h-5 text-gray-400"></i>
+                <span class="font-medium text-sm text-gray-700">التقاويض</span>
+            </button>
+            <button
+                class="w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border-r-4 transition-all bg-gray-50 border-r-gray-300 hover:bg-gray-100">
+                <i data-lucide="help-circle" class="w-5 h-5 text-gray-400"></i>
+                <span class="font-medium text-sm text-gray-700">استبيانات أبشر</span>
+            </button>
+            <button
+                class="w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border-r-4 transition-all bg-gray-50 border-r-gray-300 hover:bg-gray-100">
+                <i data-lucide="dollar-sign" class="w-5 h-5 text-gray-400"></i>
+                <span class="font-medium text-sm text-gray-700">المدفوعات الحكومية</span>
+            </button>
+        </div>
+
+        <!-- Main Content (Left Side in Visual, Second in DOM) -->
+        <div class="flex-1">
+
+            <!-- Main Dashboard View -->
+            <div id="main-dashboard-view">
+                <!-- Search Bar -->
+                <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="text-green-600 font-bold text-lg">بحث</div>
+                        <input type="text" placeholder="اكتب هنا للبحث"
+                            class="flex-1 outline-none text-sm text-gray-600 placeholder:text-gray-400 text-right">
+                        <i data-lucide="chevron-left" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- Main Services Grid -->
+                <div class="space-y-12">
+                    <div class="grid grid-cols-5 gap-6">
+                        <!-- Service Card 1 -->
+                        <div
+                            class="bg-white rounded-xl shadow-sm p-6 text-center h-full flex flex-col justify-between items-center transition-transform hover:-translate-y-1 border border-gray-100 cursor-pointer">
+                            <div
+                                class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100 mx-auto">
+                                <span class="text-4xl">📅</span>
+                            </div>
+                            <div class="w-full mt-auto">
+                                <div class="bg-green-700 text-white py-3 px-4 rounded-lg font-bold w-full text-sm">
+                                    مواعيد</div>
+                            </div>
+                        </div>
+                        <!-- Service Card 2 -->
+                        <div
+                            class="bg-white rounded-xl shadow-sm p-6 text-center h-full flex flex-col justify-between items-center transition-transform hover:-translate-y-1 border border-gray-100 cursor-pointer">
+                            <div
+                                class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100 mx-auto">
+                                <span class="text-4xl">👥</span>
+                            </div>
+                            <div class="w-full mt-auto">
+                                <div class="bg-green-700 text-white py-3 px-4 rounded-lg font-bold w-full text-sm">
+                                    العمالة</div>
+                            </div>
+                        </div>
+                        <!-- Service Card 3 -->
+                        <div
+                            class="bg-white rounded-xl shadow-sm p-6 text-center h-full flex flex-col justify-between items-center transition-transform hover:-translate-y-1 border border-gray-100 cursor-pointer">
+                            <div
+                                class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100 mx-auto">
+                                <span class="text-4xl">👨‍👩‍👧‍👦</span>
+                            </div>
+                            <div class="w-full mt-auto">
+                                <div class="bg-green-700 text-white py-3 px-4 rounded-lg font-bold w-full text-sm">أفراد
+                                    الأسرة</div>
+                            </div>
+                        </div>
+                        <!-- Service Card 4 -->
+                        <div
+                            class="bg-white rounded-xl shadow-sm p-6 text-center h-full flex flex-col justify-between items-center transition-transform hover:-translate-y-1 border border-gray-100 cursor-pointer">
+                            <div
+                                class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100 mx-auto">
+                                <span class="text-4xl">🚗</span>
+                            </div>
+                            <div class="w-full mt-auto">
+                                <div class="bg-green-700 text-white py-3 px-4 rounded-lg font-bold w-full text-sm">
+                                    المركبات</div>
+                            </div>
+                        </div>
+                        <!-- Service Card 5 (My Services) -->
+                        <div onclick="toggleMyServices()"
+                            class="bg-white rounded-xl shadow-sm p-6 text-center h-full flex flex-col justify-between items-center transition-transform hover:-translate-y-1 border border-gray-100 cursor-pointer">
+                            <div
+                                class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100 mx-auto">
+                                <span class="text-4xl">💻</span>
+                            </div>
+                            <div class="w-full mt-auto">
+                                <div class="bg-green-700 text-white py-3 px-4 rounded-lg font-bold w-full text-sm">
+                                    خدماتي</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other Services Carousel -->
+                    <div class="space-y-6">
+                        <div class="text-center">
+                            <div class="flex justify-center items-center gap-4 mt-4">
+                                <div class="w-32 h-px bg-gray-300"></div>
+                                <h2 class="text-xl font-bold text-gray-500 bg-white px-4 z-10 relative">خدمات أخرى</h2>
+                                <div class="w-32 h-px bg-gray-300"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4 px-8 relative">
+                            <!-- Left Arrow -->
+                            <button class="p-2 hover:bg-gray-100 rounded absolute left-0 z-10">
+                                <i data-lucide="chevron-left" class="w-8 h-8 text-green-600 font-bold"></i>
+                            </button>
+
+                            <!-- Carousel Items -->
+                            <div class="flex-1 flex gap-4 overflow-hidden justify-center">
+                                <!-- Item 1 -->
+                                <div
+                                    class="flex-1 bg-white border border-gray-200 rounded-lg p-6 flex flex-col items-center gap-4 relative min-w-[180px] max-w-[220px] shadow-sm">
+                                    <span class="text-4xl text-green-600">✈️</span>
+                                    <p class="text-sm font-semibold text-gray-500 text-center">إيقاف الخدمات وقيود السفر
+                                    </p>
+                                </div>
+                                <!-- Item 2 -->
+                                <div
+                                    class="flex-1 bg-white border border-gray-200 rounded-lg p-6 flex flex-col items-center gap-4 relative min-w-[180px] max-w-[220px] shadow-sm">
+                                    <span class="text-4xl text-green-600">📊</span>
+                                    <p class="text-sm font-semibold text-gray-500 text-center">مزاد اللوحات الإلكتروني
+                                    </p>
+                                </div>
+                                <!-- Item 3 -->
+                                <div
+                                    class="flex-1 bg-white border border-gray-200 rounded-lg p-6 flex flex-col items-center gap-4 relative min-w-[180px] max-w-[220px] shadow-sm">
+                                    <span class="text-4xl text-green-600">🤝</span>
+                                    <p class="text-sm font-semibold text-gray-500 text-center">مبايعة المركبات</p>
+                                </div>
+                                <!-- Item 4 -->
+                                <div
+                                    class="flex-1 bg-white border border-gray-200 rounded-lg p-6 flex flex-col items-center gap-4 relative min-w-[180px] max-w-[220px] shadow-sm">
+                                    <div
+                                        class="absolute top-0 right-0 bg-red-600 text-white px-3 py-1 text-[10px] font-bold transform translate-x-2 -translate-y-2 shadow-md z-10">
+                                        جديد
+                                    </div>
+                                    <span class="text-4xl text-green-600">📋</span>
+                                    <p class="text-sm font-semibold text-gray-500 text-center">تقارير أبشر</p>
+                                </div>
+                                <!-- Item 5 -->
+                                <div
+                                    class="flex-1 bg-white border border-gray-200 rounded-lg p-6 flex flex-col items-center gap-4 relative min-w-[180px] max-w-[220px] shadow-sm">
+                                    <div
+                                        class="absolute top-0 right-0 bg-red-600 text-white px-3 py-1 text-[10px] font-bold transform translate-x-2 -translate-y-2 shadow-md z-10">
+                                        جديد
+                                    </div>
+                                    <span class="text-4xl text-green-600">📋</span>
+                                    <p class="text-sm font-semibold text-gray-500 text-center">إصدار شهادة خلو سوابق</p>
+                                </div>
+                            </div>
+
+                            <!-- Right Arrow -->
+                            <button class="p-2 hover:bg-gray-100 rounded absolute right-0 z-10">
+                                <i data-lucide="chevron-right" class="w-8 h-8 text-green-600 font-bold"></i>
+                            </button>
+                        </div>
+
+                        <!-- Dots -->
+                        <div class="flex justify-center gap-2 mt-4">
+                            <button class="w-3 h-3 rounded-full bg-green-600"></button>
+                            <button class="w-3 h-3 rounded-full bg-gray-300"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Services View (Hidden by default) -->
+            <div id="my-services-view" class="hidden">
+                <!-- Breadcrumb & Search -->
+                <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 text-sm">
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 cursor-pointer"
+                                onclick="toggleMyServices()"></i>
+                            <span class="text-gray-500">الخدمات الإلكترونية</span>
+                            <i data-lucide="chevron-left" class="w-4 h-4 text-gray-300"></i>
+                            <span class="text-green-600 font-bold">خدماتي</span>
+                            <i data-lucide="chevron-left" class="w-4 h-4 text-gray-300"></i>
+                            <span id="breadcrumb-current" class="text-gray-500">خدمات</span>
+                        </div>
+                        <div class="flex items-center gap-2 flex-1 justify-end">
+                            <input type="text" placeholder="اكتب هنا للبحث"
+                                class="outline-none text-sm text-gray-600 placeholder:text-gray-400 text-right w-64">
+                            <div class="text-green-600 font-bold text-lg border-r border-gray-200 pr-4">بحث</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex justify-end gap-2 mb-6">
+                    <button id="tab-inquiries" onclick="switchTab('inquiries')"
+                        class="bg-gray-200 text-gray-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-300 transition">استعلامات</button>
+                    <button id="tab-services" onclick="switchTab('services')"
+                        class="bg-green-100 text-green-700 px-6 py-2 rounded-lg font-bold border border-green-200">خدمات</button>
+                </div>
+
+                <!-- Services List Grid -->
+                <div id="grid-services" class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+                    <div class="grid grid-cols-2 gap-y-8 gap-x-12">
+                        <!-- Row 1 -->
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">توصيل الوثائق
+                                بالبريد</span>
+                            <i data-lucide="truck" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">الأحوال
+                                المدنية</span>
+                            <i data-lucide="credit-card" class="w-6 h-6 text-green-500"></i>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">المرور</span>
+                            <i data-lucide="car" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">الأمن
+                                العام</span>
+                            <i data-lucide="shield" class="w-6 h-6 text-green-500"></i>
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">رعاية أسر
+                                الشهداء والمصابين</span>
+                            <i data-lucide="user-plus" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">المديرية
+                                العامة للسجون</span>
+                            <i data-lucide="landmark" class="w-6 h-6 text-green-500"></i>
+                        </div>
+
+                        <!-- Row 4 -->
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">الامارات
+                                والمناطق</span>
+                            <i data-lucide="globe" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">خدمات النيابة
+                                العامة</span>
+                            <i data-lucide="briefcase" class="w-6 h-6 text-green-500"></i>
+                        </div>
+
+                        <!-- Extra Item to match layout -->
+                        <div></div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span
+                                class="text-gray-700 font-medium group-hover:text-green-600 transition">الجوازات</span>
+                            <i data-lucide="book-open" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inquiries List Grid (Hidden by default) -->
+                <div id="grid-inquiries" class="bg-white rounded-xl shadow-sm p-8 border border-gray-100 hidden">
+                    <div class="grid grid-cols-2 gap-y-8 gap-x-12">
+                        <!-- Row 1 -->
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">الأحوال
+                                المدنية</span>
+                            <i data-lucide="credit-card" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">الخدمات
+                                العامة</span>
+                            <i data-lucide="megaphone" class="w-6 h-6 text-green-500"></i>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">الإدارة العامة
+                                لشؤون الوافدين</span>
+                            <i data-lucide="users" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">المرور</span>
+                            <i data-lucide="car" class="w-6 h-6 text-green-500"></i>
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div></div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span
+                                class="text-gray-700 font-medium group-hover:text-green-600 transition">المخالفات</span>
+                            <i data-lucide="file-warning" class="w-6 h-6 text-green-500"></i>
+                        </div>
+
+                        <!-- Row 4 -->
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span class="text-gray-700 font-medium group-hover:text-green-600 transition">الأمن
+                                العام</span>
+                            <i data-lucide="shield" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 cursor-pointer group">
+                            <span
+                                class="text-gray-700 font-medium group-hover:text-green-600 transition">الجوازات</span>
+                            <i data-lucide="book" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <button id="chat-button" onclick="openChatAssistant()"
+        class="fixed bottom-6 left-6 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-full shadow-2xl hover:shadow-green-500/50 transition-all duration-300 flex items-center gap-3 z-50 animate-pulse hover:animate-none group">
+        <i data-lucide="message-circle" class="w-6 h-6"></i>
+        <span class="font-bold text-lg">عون - المساعد الذكي</span>
+        <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-ping"></span>
+        <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full"></span>
+    </button>
+
+    <!-- Chat Assistant Modal -->
+    <div id="chat-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="relative w-full max-w-4xl h-[85vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+
+            <!-- Chat Header -->
+            <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                        <i data-lucide="bot" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-lg">عون - المساعد الذكي</h3>
+                        <p class="text-emerald-100 text-sm">متصل • جاهز للمساعدة</p>
+                    </div>
+                </div>
+                <button onclick="closeChatAssistant()"
+                    class="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-full transition-all flex items-center gap-2">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Content Container -->
+            <div class="relative flex-1 overflow-hidden">
+
+                <!-- Screen 1: Chat Interface -->
+                <div id="screen-landing" class="chat-screen h-full flex flex-col">
+                    <!-- Chat Messages Area -->
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+                        <!-- Welcome Message from Bot -->
+                        <div class="flex gap-3 animate-fadeIn">
+                            <div
+                                class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="bg-white rounded-2xl rounded-tr-none px-5 py-3 shadow-sm">
+                                    <p class="text-gray-800 leading-relaxed">مرحباً! أنا عون، مساعدك الذكي في خدمات أبشر
+                                        👋</p>
+                                </div>
+                                <span class="text-xs text-gray-400 mt-1 inline-block">الآن</span>
+                            </div>
+                        </div>
+
+                        <!-- Second Message -->
+                        <div class="flex gap-3 animate-fadeIn" style="animation-delay: 0.3s">
+                            <div
+                                class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="bg-white rounded-2xl rounded-tr-none px-5 py-3 shadow-sm">
+                                    <p class="text-gray-800 leading-relaxed">أستطيع مساعدتك في فحص حالتك الحكومية وحل أي
+                                        مشاكل بشكل تلقائي</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="flex gap-3 animate-fadeIn" style="animation-delay: 0.6s">
+                            <div class="w-8 h-8 flex-shrink-0"></div>
+                            <div class="flex-1">
+                                <button onclick="startHealthScan()"
+                                    class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-2xl text-lg font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 hover:scale-105 active:scale-95">
+                                    <i data-lucide="search-check" class="w-6 h-6"></i>
+                                    <span>ابدأ فحص صحتك الحكومية الآن</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Suggestions -->
+                        <div class="flex gap-3 animate-fadeIn" style="animation-delay: 0.9s">
+                            <div class="w-8 h-8 flex-shrink-0"></div>
+                            <div class="flex-1 space-y-2">
+                                <p class="text-gray-500 text-sm">أو اختر من الاقتراحات:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        class="bg-white text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-gray-100 transition-all shadow-sm">
+                                        📄 الوثائق
+                                    </button>
+                                    <button
+                                        class="bg-white text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-gray-100 transition-all shadow-sm">
+                                        🚗 المركبات
+                                    </button>
+                                    <button
+                                        class="bg-white text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-gray-100 transition-all shadow-sm">
+                                        👨‍👩‍👧‍👦 العائلة
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input (disabled for now) -->
+                    <div class="border-t border-gray-200 p-4 bg-white">
+                        <div class="flex gap-3">
+                            <input type="text" placeholder="اكتب رسالتك هنا... (قريباً)" disabled
+                                class="flex-1 px-4 py-3 rounded-full border-2 border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+                                dir="rtl">
+                            <button disabled
+                                class="bg-gray-200 text-gray-400 px-6 py-3 rounded-full cursor-not-allowed">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen 2: Scanning -->
+                <div id="screen-scanning" class="chat-screen hidden max-w-xl w-full">
+                    <div class="bg-white rounded-3xl shadow-2xl p-12">
+                        <i data-lucide="loader-2" class="w-16 h-16 text-green-700 animate-spin mx-auto mb-8"></i>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">جاري الفحص...</h2>
+                        <div class="space-y-4 mb-8" id="scan-steps">
+                            <!-- Steps will be populated by JavaScript -->
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="scan-progress-bar"
+                                class="h-full bg-gradient-to-r from-green-700 to-emerald-500 transition-all duration-300"
+                                style="width: 0%"></div>
+                        </div>
+                        <p class="text-gray-500 mt-3 text-lg text-center"><span id="scan-progress-text">0</span>٪</p>
+                    </div>
+                </div>
+
+                <!-- Screen 3: Dashboard -->
+                <div id="screen-dashboard" class="chat-screen hidden max-w-5xl w-full overflow-y-auto max-h-full">
+                    <div class="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
+                        <div class="text-center mb-10">
+                            <h2 class="text-4xl font-bold text-gray-800 mb-2">نتيجة الفحص الشامل</h2>
+                            <p class="text-gray-500 text-lg">مرحباً، أحمد عبدالله</p>
+                            <p class="text-gray-400 text-sm">آخر فحص: الآن</p>
+                        </div>
+
+                        <!-- Score Circle -->
+                        <div class="flex justify-center mb-12">
+                            <div id="score-container" class="relative bg-green-100 rounded-full p-8">
+                                <div
+                                    class="w-48 h-48 rounded-full border-8 border-green-500 flex flex-col items-center justify-center">
+                                    <span id="health-score" class="text-6xl font-bold text-green-600">82</span>
+                                    <span class="text-3xl text-gray-400 font-light">/100</span>
+                                    <span id="health-status"
+                                        class="text-sm font-semibold mt-2 px-4 py-1 rounded-full bg-green-500 text-white">جيد
+                                        جداً</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categories -->
+                        <div class="space-y-4">
+                            <!-- Documents -->
+                            <div
+                                class="border-2 border-green-500 bg-green-50 rounded-2xl p-6 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-12 h-12 rounded-xl flex items-center justify-center bg-green-500 text-white">
+                                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-800">الوثائق الشخصية</h3>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-3xl font-bold text-green-600">95/100</span>
+                                    <span class="text-2xl">✅</span>
+                                </div>
+                            </div>
+
+                            <!-- Vehicles -->
+                            <div
+                                class="border-2 border-yellow-500 bg-yellow-50 rounded-2xl p-6 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-12 h-12 rounded-xl flex items-center justify-center bg-yellow-500 text-white">
+                                        <i data-lucide="car" class="w-6 h-6"></i>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-800">المركبات والنقل</h3>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-3xl font-bold text-yellow-600">58/100</span>
+                                    <span class="text-2xl">⚠️</span>
+                                </div>
+                            </div>
+
+                            <!-- Workers (Expandable) -->
+                            <div id="workers-category"
+                                class="border-2 border-yellow-500 bg-yellow-50 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all"
+                                onclick="toggleWorkers()">
+                                <div class="p-6 flex items-center justify-between">
+                                    <div class="flex items-center gap-4">
+                                        <div
+                                            class="w-12 h-12 rounded-xl flex items-center justify-center bg-yellow-500 text-white">
+                                            <i data-lucide="users" class="w-6 h-6"></i>
+                                        </div>
+                                        <h3 class="text-xl font-semibold text-gray-800">العمالة المنزلية</h3>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span id="workers-score"
+                                            class="text-3xl font-bold text-yellow-600">75/100</span>
+                                        <span class="text-2xl">⚠️</span>
+                                    </div>
+                                </div>
+
+                                <!-- Expanded Details -->
+                                <div id="workers-details" class="hidden border-t-2 border-yellow-200 p-6 bg-white">
+                                    <div class="space-y-4">
+                                        <div class="bg-gray-50 rounded-xl p-5">
+                                            <h4 class="text-lg font-bold text-gray-800 mb-2">👷 العاملة: أحمد شاه</h4>
+                                            <p class="text-gray-600">الجنسية: بنغلاديش</p>
+                                            <p class="text-gray-600">رقم الإقامة: 2*******89</p>
+                                        </div>
+
+                                        <!-- Status Cards -->
+                                        <div class="space-y-2">
+                                            <div
+                                                class="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                                                <span class="text-lg">✅</span>
+                                                <p class="text-gray-700 flex-1 text-right font-medium">التأمين الطبي
+                                                    ساري</p>
+                                            </div>
+                                            <div
+                                                class="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                                                <span class="text-lg">✅</span>
+                                                <p class="text-gray-700 flex-1 text-right font-medium">العقد ساري</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-3">
+                                            <h5 class="text-lg font-semibold text-gray-800">تنبيه واحد:</h5>
+                                            <div
+                                                class="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-300 rounded-xl">
+                                                <span class="text-xl">⚠️</span>
+                                                <div class="flex-1 text-right">
+                                                    <p class="text-gray-800 font-semibold mb-1">الإقامة تنتهي خلال 5
+                                                        أيام</p>
+                                                    <p class="text-gray-600 text-sm">💡 يمكنك رفع طلب التجديد الآن</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                                            <p class="text-lg font-bold text-blue-800 mb-1">التكلفة المتوقعة: 650 ريال
+                                            </p>
+                                            <p class="text-sm text-blue-600">لتجديد الإقامة فقط</p>
+                                        </div>
+
+                                        <button onclick="startFixing(event)"
+                                            class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-5 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 hover:scale-105 active:scale-95">
+                                            <span class="text-2xl"></span>
+                                            <span> اصلحة بأستخدام عون</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Family -->
+                            <div
+                                class="border-2 border-green-500 bg-green-50 rounded-2xl p-6 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-12 h-12 rounded-xl flex items-center justify-center bg-green-500 text-white">
+                                        <i data-lucide="users" class="w-6 h-6"></i>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-800">أفراد العائلة</h3>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-3xl font-bold text-green-600">100/100</span>
+                                    <span class="text-2xl">✅</span>
+                                </div>
+                            </div>
+
+                            <!-- Financial -->
+                            <div
+                                class="border-2 border-green-500 bg-green-50 rounded-2xl p-6 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-12 h-12 rounded-xl flex items-center justify-center bg-green-500 text-white">
+                                        <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-800">الالتزامات المالية</h3>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-3xl font-bold text-green-600">100/100</span>
+                                    <span class="text-2xl">✅</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen 4: Fixing -->
+                <div id="screen-fixing" class="chat-screen hidden max-w-xl w-full">
+                    <div class="bg-white rounded-3xl shadow-2xl p-12">
+                        <i data-lucide="loader-2" class="w-16 h-16 text-green-700 animate-spin mx-auto mb-8"></i>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">جاري إصلاح المشاكل...</h2>
+                        <div class="space-y-4" id="fixing-steps">
+                            <!-- Steps will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen 5: Success -->
+                <div id="screen-success" class="chat-screen hidden max-w-2xl w-full">
+                    <div class="bg-white rounded-3xl shadow-2xl p-12 text-center">
+                        <div class="mb-8">
+                            <div
+                                class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg animate-bounce">
+                                <i data-lucide="check" class="w-16 h-16 text-white"></i>
+                            </div>
+                            <h2 class="text-5xl font-bold text-gray-800 mb-4">تم بنجاح! ✅</h2>
+                        </div>
+
+                        <div class="mb-8">
+                            <div class="flex items-center justify-center gap-4 text-4xl font-bold">
+                                <span class="text-yellow-600">82</span>
+                                <i data-lucide="arrow-right" class="w-8 h-8 text-gray-400"></i>
+                                <span class="text-green-500">98</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 mb-8 bg-gray-50 rounded-2xl p-6">
+                            <div class="text-right">
+                                <p class="text-gray-600">رقم الفاتورة:</p>
+                                <p class="text-xl font-bold text-gray-800" id="invoice-number">1234567890</p>
+                            </div>
+                            <div class="border-t border-gray-200 my-4"></div>
+                            <div class="text-right">
+                                <p class="text-green-500 font-semibold text-lg mb-2">✅ تم تجديد الإقامة بنجاح</p>
+                                <p class="text-gray-700">الإقامة سارية حتى: ديسمبر 2026</p>
+                                <p class="text-gray-600 text-sm mt-2">💰 المبلغ المدفوع: 650 ريال</p>
+                            </div>
+                        </div>
+
+                        <button onclick="returnToDashboard()"
+                            class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-5 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
+                            العودة للوحة التحكم
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification"
+        class="fixed bottom-8 right-8 bg-green-500 text-white px-8 py-4 rounded-2xl shadow-2xl hidden items-center gap-3 z-[110] animate-slideIn">
+        <i data-lucide="check" class="w-6 h-6"></i>
+        <span class="text-lg font-semibold">تم حل 3 مشاكل بنجاح ✓</span>
+    </div>
+
+    <style>
+        .chat-screen {
+            transition: all 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .animate-slideIn {
+            animation: slideIn 0.4s ease forwards;
+        }
+    </style>
+
+
+    <script>
+        lucide.createIcons();
+
+        function toggleMyServices() {
+            const mainView = document.getElementById('main-dashboard-view');
+            const myServicesView = document.getElementById('my-services-view');
+
+            if (mainView.classList.contains('hidden')) {
+                mainView.classList.remove('hidden');
+                myServicesView.classList.add('hidden');
+            } else {
+                mainView.classList.add('hidden');
+                myServicesView.classList.remove('hidden');
+                lucide.createIcons(); // Re-render icons for the new view
+            }
+        }
+
+        function switchTab(tabName) {
+            const tabServices = document.getElementById('tab-services');
+            const tabInquiries = document.getElementById('tab-inquiries');
+            const gridServices = document.getElementById('grid-services');
+            const gridInquiries = document.getElementById('grid-inquiries');
+            const breadcrumbCurrent = document.getElementById('breadcrumb-current');
+
+            if (tabName === 'services') {
+                // Activate Services Tab
+                tabServices.className = "bg-green-100 text-green-700 px-6 py-2 rounded-lg font-bold border border-green-200";
+                tabInquiries.className = "bg-gray-200 text-gray-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-300 transition";
+
+                gridServices.classList.remove('hidden');
+                gridInquiries.classList.add('hidden');
+
+                if (breadcrumbCurrent) breadcrumbCurrent.innerText = "خدمات";
+            } else {
+                // Activate Inquiries Tab
+                tabInquiries.className = "bg-green-100 text-green-700 px-6 py-2 rounded-lg font-bold border border-green-200";
+                tabServices.className = "bg-gray-200 text-gray-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-300 transition";
+
+                gridInquiries.classList.remove('hidden');
+                gridServices.classList.add('hidden');
+
+                if (breadcrumbCurrent) breadcrumbCurrent.innerText = "استعلامات";
+            }
+            lucide.createIcons();
+        }
+
+        // Health Checker Assistant Functions
+        let isFixed = false;
+
+        function openChatAssistant() {
+            const modal = document.getElementById('chat-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            resetHealthChecker();
+            lucide.createIcons();
+        }
+
+        function closeChatAssistant() {
+            const modal = document.getElementById('chat-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function resetHealthChecker() {
+            // Reset to landing screen
+            showScreen('landing');
+            isFixed = false;
+        }
+
+        function showScreen(screenName) {
+            const screens = ['landing', 'scanning', 'dashboard', 'fixing', 'success'];
+            screens.forEach(screen => {
+                const el = document.getElementById(`screen-${screen}`);
+                if (screen === screenName) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+            lucide.createIcons();
+        }
+
+        function startHealthScan() {
+            showScreen('scanning');
+
+            const scanSteps = [
+                "فحص الوثائق...",
+                "فحص المخالفات...",
+                "فحص المركبات...",
+                "فحص العمالة...",
+                "تحليل البيانات...",
+            ];
+
+            const stepsContainer = document.getElementById('scan-steps');
+            stepsContainer.innerHTML = scanSteps.map((step, index) => `
+                <div class="flex items-center gap-3 text-right opacity-30" id="scan-step-${index}">
+                    <div class="w-6 h-6 rounded-full border-2 border-gray-300" id="scan-icon-${index}"></div>
+                    <span class="text-lg text-gray-700">${step}</span>
+                </div>
+            `).join('');
+
+            let progress = 0;
+            let currentStep = 0;
+
+            // Animate steps
+            const stepInterval = setInterval(() => {
+                if (currentStep > 0) {
+                    const prevStep = document.getElementById(`scan-step-${currentStep - 1}`);
+                    const prevIcon = document.getElementById(`scan-icon-${currentStep - 1}`);
+                    prevStep.classList.remove('opacity-30');
+                    prevStep.classList.add('opacity-100');
+                    prevIcon.outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                }
+
+                if (currentStep < scanSteps.length) {
+                    const currentEl = document.getElementById(`scan-step-${currentStep}`);
+                    const currentIcon = document.getElementById(`scan-icon-${currentStep}`);
+                    currentEl.classList.remove('opacity-30');
+                    currentEl.classList.add('opacity-100');
+                    currentIcon.outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-green-700 animate-spin"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>';
+                    currentStep++;
+                } else {
+                    const lastStep = document.getElementById(`scan-step-${scanSteps.length - 1}`);
+                    const lastIcon = document.getElementById(`scan-icon-${scanSteps.length - 1}`);
+                    lastIcon.outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                    clearInterval(stepInterval);
+                }
+            }, 500);
+
+            // Progress bar
+            const progressInterval = setInterval(() => {
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(() => showScreen('dashboard'), 300);
+                } else {
+                    progress += 4;
+                    document.getElementById('scan-progress-bar').style.width = progress + '%';
+                    document.getElementById('scan-progress-text').textContent = progress;
+                }
+            }, 50);
+        }
+
+        function toggleWorkers() {
+            const details = document.getElementById('workers-details');
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+            } else {
+                details.classList.add('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function startFixing(event) {
+            event.stopPropagation();
+            showScreen('fixing');
+
+            // Generate random 10-digit invoice number
+            const invoiceNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+            document.getElementById('invoice-number').textContent = invoiceNumber;
+
+            const fixingSteps = [
+                { text: "رفع طلب تجديد الإقامة...", duration: 1200 },
+                { text: "دفع الرسوم (650 ريال)...", duration: 1000 },
+                { text: "تحديث البيانات...", duration: 800 },
+            ];
+
+            const stepsContainer = document.getElementById('fixing-steps');
+            stepsContainer.innerHTML = fixingSteps.map((step, index) => `
+                <div class="flex items-start gap-3 text-right opacity-30" id="fix-step-${index}">
+                    <div class="w-6 h-6 rounded-full border-2 border-gray-300 flex-shrink-0 mt-1" id="fix-icon-${index}"></div>
+                    <span class="text-lg text-gray-700 flex-1">${step.text}</span>
+                </div>
+            `).join('');
+
+            let currentStep = 0;
+
+            function processNextStep() {
+                if (currentStep > 0) {
+                    const prevStep = document.getElementById(`fix-step-${currentStep - 1}`);
+                    const prevIcon = document.getElementById(`fix-icon-${currentStep - 1}`);
+                    prevIcon.outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-green-500 flex-shrink-0 mt-1"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                }
+
+                if (currentStep < fixingSteps.length) {
+                    const currentEl = document.getElementById(`fix-step-${currentStep}`);
+                    const currentIcon = document.getElementById(`fix-icon-${currentStep}`);
+                    currentEl.classList.remove('opacity-30');
+                    currentEl.classList.add('opacity-100');
+                    currentIcon.outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-green-700 animate-spin flex-shrink-0 mt-1"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>';
+
+                    setTimeout(() => {
+                        currentStep++;
+                        processNextStep();
+                    }, fixingSteps[currentStep].duration);
+                } else {
+                    const lastIcon = document.getElementById(`fix-icon-${fixingSteps.length - 1}`);
+                    lastIcon.outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-green-500 flex-shrink-0 mt-1"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                    setTimeout(() => showScreen('success'), 1000);
+                }
+            }
+
+            processNextStep();
+        }
+
+        function returnToDashboard() {
+            // Update dashboard to show fixed state
+            isFixed = true;
+            document.getElementById('health-score').textContent = '98';
+            document.getElementById('workers-score').textContent = '98';
+            document.getElementById('health-status').textContent = 'ممتاز';
+
+            const scoreContainer = document.getElementById('score-container');
+            scoreContainer.className = 'relative bg-green-100 rounded-full p-8';
+            scoreContainer.querySelector('.border-8').className = 'w-48 h-48 rounded-full border-8 border-green-500 flex flex-col items-center justify-center';
+            document.getElementById('health-score').className = 'text-6xl font-bold text-green-600';
+            document.getElementById('health-status').className = 'text-sm font-semibold mt-2 px-4 py-1 rounded-full bg-green-500 text-white';
+
+            // Update workers category from yellow to green
+            const workersCategory = document.getElementById('workers-category');
+            workersCategory.className = 'border-2 border-green-500 bg-green-50 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all';
+            workersCategory.querySelector('.bg-yellow-500').className = 'w-12 h-12 rounded-xl flex items-center justify-center bg-green-500 text-white';
+            document.getElementById('workers-score').className = 'text-3xl font-bold text-green-600';
+            workersCategory.querySelector('.text-2xl').textContent = '✅';
+            workersCategory.querySelector('.border-t-2').remove(); // Remove expanded details
+
+            showScreen('dashboard');
+
+            // Show toast
+            const toast = document.getElementById('toast-notification');
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 3500);
+
+            lucide.createIcons();
+        }
+    </script>
+</body>
+
+</html>
