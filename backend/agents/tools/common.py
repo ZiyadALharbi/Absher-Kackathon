@@ -217,7 +217,7 @@ def validate_with_tools(user_id: Optional[int], req: Dict[str, Any], collected: 
                     if viol.payment_status != "unpaid":
                         results.append({"check": "violation_unpaid", "passed": False, "message": "التمديد متاح فقط للمخالفات غير المسددة"})
                         return results, False, "المخالفة غير مسددة"
-                    if (viol.metadata or {}).get("extension_requested"):
+                    if (viol.meta or {}).get("extension_requested"):
                         results.append({"check": "violation_already_extended", "passed": False, "message": "تم طلب التمديد مسبقاً"})
                         return results, False, "تم طلب التمديد مسبقاً"
                     age = days_since(viol.violation_datetime)
@@ -225,7 +225,7 @@ def validate_with_tools(user_id: Optional[int], req: Dict[str, Any], collected: 
                         results.append({"check": "violation_window", "passed": False, "message": "التجاوز عن مدة التمديد المسموحة (45 يوم)"})
                         return results, False, "انتهت مدة التمديد"
                 if service_code == "traffic_violation_objection":
-                    if (viol.metadata or {}).get("objection_submitted"):
+                    if (viol.meta or {}).get("objection_submitted"):
                         results.append({"check": "violation_already_objected", "passed": False, "message": "تم تقديم اعتراض سابق"})
                         return results, False, "اعتراض سابق موجود"
                     age = days_since(viol.violation_datetime)
@@ -244,7 +244,7 @@ def validate_with_tools(user_id: Optional[int], req: Dict[str, Any], collected: 
                 if not acc:
                     results.append({"check": "accident_exists", "passed": False, "message": "الحادث غير موجود"})
                     return results, False, "الحادث غير موجود"
-                if (acc.metadata or {}).get("objection_or_waiver"):
+                if (acc.meta or {}).get("objection_or_waiver"):
                     results.append({"check": "accident_already_processed", "passed": False, "message": "تم الاعتراض/التنازل مسبقاً"})
                     return results, False, "طلب سابق موجود"
                 age = days_since(acc.accident_date)
@@ -263,7 +263,7 @@ def validate_with_tools(user_id: Optional[int], req: Dict[str, Any], collected: 
                 if not acc:
                     results.append({"check": "accident_exists", "passed": False, "message": "الحادث غير موجود"})
                     return results, False, "الحادث غير موجود"
-                if (acc.metadata or {}).get("report_issued"):
+                if (acc.meta or {}).get("report_issued"):
                     results.append({"check": "report_exists", "passed": False, "message": "تم إصدار التقرير مسبقاً"})
                     return results, False, "تم إصدار التقرير مسبقاً"
                 age = days_since(acc.accident_date)
@@ -307,6 +307,14 @@ def execute_service_action(user_id: Optional[int], service_code: str, req: Dict[
         return {"status": "error", "message": "المستخدم غير معروف"}
 
     with Session(engine) as session:
+        # Special handling: use violation amount as fee
+        if service_code == "traffic_violation_payment":
+            vnum = collected.get("violation_number")
+            viol = get_violation_by_number(session, user_id, vnum) if vnum else None
+            if not viol:
+                return {"status": "error", "message": "المخالفة غير موجودة"}
+            fee = int(viol.amount or 0)
+
         if requires_payment and fee > 0:
             debit_wallet(session, user_id, fee, reference=service_code)
             record_payment(session, user_id, fee, reference=service_code)
@@ -319,10 +327,10 @@ def execute_service_action(user_id: Optional[int], service_code: str, req: Dict[
             vnum = collected.get("violation_number")
             viol = get_violation_by_number(session, user_id, vnum) if vnum else None
             if viol:
-                meta = viol.metadata or {}
+                meta = viol.meta or {}
                 meta["extension_requested"] = True
                 meta["extension_requested_at"] = dt.datetime.utcnow().isoformat()
-                viol.metadata = meta
+                viol.meta = meta
                 session.add(viol)
                 session.commit()
                 result["violation_number"] = vnum
@@ -331,11 +339,20 @@ def execute_service_action(user_id: Optional[int], service_code: str, req: Dict[
             vnum = collected.get("violation_number")
             viol = get_violation_by_number(session, user_id, vnum) if vnum else None
             if viol:
-                meta = viol.metadata or {}
+                meta = viol.meta or {}
                 meta["objection_submitted"] = True
                 meta["objection_reason"] = collected.get("objection_reason")
                 meta["objection_submitted_at"] = dt.datetime.utcnow().isoformat()
-                viol.metadata = meta
+                viol.meta = meta
+                session.add(viol)
+                session.commit()
+                result["violation_number"] = vnum
+
+        elif service_code == "traffic_violation_payment":
+            vnum = collected.get("violation_number")
+            viol = get_violation_by_number(session, user_id, vnum) if vnum else None
+            if viol:
+                viol.payment_status = "paid"
                 session.add(viol)
                 session.commit()
                 result["violation_number"] = vnum
@@ -345,10 +362,10 @@ def execute_service_action(user_id: Optional[int], service_code: str, req: Dict[
             anum = collected.get("accident_number")
             acc = get_accident_by_number(session, user_id, anum) if anum else None
             if acc:
-                meta = acc.metadata or {}
+                meta = acc.meta or {}
                 meta["report_issued"] = True
                 meta["report_issued_at"] = dt.datetime.utcnow().isoformat()
-                acc.metadata = meta
+                acc.meta = meta
                 session.add(acc)
                 session.commit()
                 result["accident_number"] = anum
@@ -358,10 +375,10 @@ def execute_service_action(user_id: Optional[int], service_code: str, req: Dict[
             anum = collected.get("accident_number")
             acc = get_accident_by_number(session, user_id, anum) if anum else None
             if acc:
-                meta = acc.metadata or {}
+                meta = acc.meta or {}
                 meta["objection_or_waiver"] = collected.get("objection_type", "objection")
                 meta["objection_or_waiver_at"] = dt.datetime.utcnow().isoformat()
-                acc.metadata = meta
+                acc.meta = meta
                 session.add(acc)
                 session.commit()
                 result["accident_number"] = anum

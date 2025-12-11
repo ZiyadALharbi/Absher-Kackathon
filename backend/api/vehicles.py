@@ -21,7 +21,7 @@ def list_vehicles_route(user=Depends(get_current_user), session=Depends(get_sess
             "status": v.status,
             "expiry_date": v.expiry_date,
             "insurance_expiry": v.insurance_expiry,
-            "metadata": v.metadata,
+            "metadata": v.meta,
         }
         for v in vehicles
     ]

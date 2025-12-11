@@ -25,7 +25,7 @@ def list_violations_route(status: str | None = None, user=Depends(get_current_us
             "status": v.payment_status,
             "city": v.city,
             "datetime": v.violation_datetime,
-            "metadata": v.metadata,
+        "metadata": v.meta,
         }
         for v in viols
     ]
@@ -38,12 +38,12 @@ def extend_violation(violation_number: str, user=Depends(get_current_user), sess
         raise HTTPException(status_code=404, detail="المخالفة غير موجودة")
     if viol.payment_status != "unpaid":
         raise HTTPException(status_code=400, detail="التمديد متاح فقط للمخالفات غير المسددة")
-    meta = viol.metadata or {}
+    meta = viol.meta or {}
     if meta.get("extension_requested"):
         raise HTTPException(status_code=400, detail="تم طلب التمديد مسبقاً")
     meta["extension_requested"] = True
     meta["extension_requested_at"] = None
-    viol.metadata = meta
+    viol.meta = meta
     session.add(viol)
     session.commit()
     return {"status": "success", "violation_number": violation_number}
@@ -54,13 +54,13 @@ def violation_objection(violation_number: str, reason: str | None = None, user=D
     viol = get_violation_by_number(session, user.id, violation_number)
     if not viol:
         raise HTTPException(status_code=404, detail="المخالفة غير موجودة")
-    meta = viol.metadata or {}
+    meta = viol.meta or {}
     if meta.get("objection_submitted"):
         raise HTTPException(status_code=400, detail="تم تقديم اعتراض سابق")
     meta["objection_submitted"] = True
     meta["objection_reason"] = reason
     meta["objection_submitted_at"] = None
-    viol.metadata = meta
+    viol.meta = meta
     session.add(viol)
     session.commit()
     return {"status": "success", "violation_number": violation_number}

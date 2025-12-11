@@ -5,25 +5,56 @@ import secrets
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-from sqlmodel import select
-from passlib.hash import bcrypt
+from sqlmodel import Session, select
+from passlib.hash import pbkdf2_sha256
 
 from backend.db import get_session
 from backend.models import SessionToken, User
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+auth_scheme = HTTPBearer(auto_error=False)
 
 
-def get_current_user(session=Depends(get_session), authorization: str = None) -> User:
-    if not authorization or not authorization.lower().startswith("bearer "):
+def _utcnow() -> dt.datetime:
+    return dt.datetime.now(dt.timezone.utc)
+
+
+def _prune_expired_tokens(session: Session) -> None:
+    """Delete expired session tokens to limit table growth."""
+    now = _utcnow()
+    expired_stmt = select(SessionToken).where(SessionToken.expires_at <= now)
+    expired = session.exec(expired_stmt).all()
+    if expired:
+        for token in expired:
+            session.delete(token)
+        session.commit()
+
+
+def _find_valid_token(session: Session, raw_token: str) -> Optional[SessionToken]:
+    """Return the matching non-expired session token by verifying the token hash."""
+    now = _utcnow()
+    stmt = select(SessionToken).where(SessionToken.expires_at > now)
+    for st in session.exec(stmt).all():
+        if pbkdf2_sha256.verify(raw_token, st.token):
+            return st
+    return None
+
+
+def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(auth_scheme),
+    session: Session = Depends(get_session),
+) -> User:
+    if not credentials or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=401, detail="Not authenticated")
-    token_val = authorization.split(" ", 1)[1]
-    stmt = select(SessionToken).where(SessionToken.token == token_val, SessionToken.expires_at > dt.datetime.utcnow())
-    st = session.exec(stmt).first()
+
+    _prune_expired_tokens(session)
+    st = _find_valid_token(session, credentials.credentials)
     if not st:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+
     user = session.get(User, st.user_id)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
@@ -42,27 +73,33 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(payload: LoginRequest, session=Depends(get_session)):
+def login(payload: LoginRequest, session: Session = Depends(get_session)):
+    _prune_expired_tokens(session)
+
     stmt = select(User).where(User.national_id == payload.national_id)
     user = session.exec(stmt).first()
-    if not user or not bcrypt.verify(payload.pin, user.hashed_pin):
+    if not user or not pbkdf2_sha256.verify(payload.pin, user.hashed_pin):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = secrets.token_urlsafe(32)
-    expires_at = dt.datetime.utcnow() + dt.timedelta(hours=24)
-    st = SessionToken(token=token, user_id=user.id, expires_at=expires_at)
+
+    raw_token = secrets.token_urlsafe(32)
+    expires_at = _utcnow() + dt.timedelta(hours=24)
+    st = SessionToken(token=pbkdf2_sha256.hash(raw_token), user_id=user.id, expires_at=expires_at)
     session.add(st)
     session.commit()
     session.refresh(st)
-    return LoginResponse(token=st.token, expires_at=st.expires_at, display_name=user.display_name)
+    return LoginResponse(token=raw_token, expires_at=st.expires_at, display_name=user.display_name)
 
 
 @router.post("/logout")
-def logout(session=Depends(get_session), authorization: str = None):
-    if not authorization or not authorization.lower().startswith("bearer "):
+def logout(
+    session: Session = Depends(get_session),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(auth_scheme),
+):
+    if not credentials or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=401, detail="Not authenticated")
-    token_val = authorization.split(" ", 1)[1]
-    stmt = select(SessionToken).where(SessionToken.token == token_val)
-    st = session.exec(stmt).first()
+
+    _prune_expired_tokens(session)
+    st = _find_valid_token(session, credentials.credentials)
     if st:
         session.delete(st)
         session.commit()

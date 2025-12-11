@@ -1,4 +1,4 @@
-// File: /Users/rayidalshammari/Desktop/AbsherThon/aun-agent/app/layout.tsx
+// File: /Users/ziyadalharbi/projects/Absher-Kackathon/front-end/aun-agent/app/layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

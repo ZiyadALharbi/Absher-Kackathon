@@ -21,7 +21,7 @@ def list_accidents(user=Depends(get_current_user), session=Depends(get_session))
             "accident_number": a.accident_number,
             "accident_date": a.accident_date,
             "plate_number": a.plate_number,
-            "metadata": a.metadata,
+            "metadata": a.meta,
         }
         for a in accs
     ]
@@ -32,12 +32,12 @@ def issue_report(accident_number: str, user=Depends(get_current_user), session=D
     acc = get_accident_by_number(session, user.id, accident_number)
     if not acc:
         raise HTTPException(status_code=404, detail="الحادث غير موجود")
-    meta = acc.metadata or {}
+    meta = acc.meta or {}
     if meta.get("report_issued"):
         raise HTTPException(status_code=400, detail="تم إصدار التقرير مسبقاً")
     meta["report_issued"] = True
     meta["report_issued_at"] = None
-    acc.metadata = meta
+    acc.meta = meta
     session.add(acc)
     session.commit()
     return {"status": "success", "accident_number": accident_number}
@@ -48,12 +48,12 @@ def accident_objection(accident_number: str, objection_type: str = "objection", 
     acc = get_accident_by_number(session, user.id, accident_number)
     if not acc:
         raise HTTPException(status_code=404, detail="الحادث غير موجود")
-    meta = acc.metadata or {}
+    meta = acc.meta or {}
     if meta.get("objection_or_waiver"):
         raise HTTPException(status_code=400, detail="تم الاعتراض/التنازل مسبقاً")
     meta["objection_or_waiver"] = objection_type
     meta["objection_or_waiver_at"] = None
-    acc.metadata = meta
+    acc.meta = meta
     session.add(acc)
     session.commit()
     return {"status": "success", "accident_number": accident_number}

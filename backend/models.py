@@ -17,8 +17,6 @@ class ServiceCategory(SQLModel, table=True):
     sort_order: Optional[int] = None
     is_active: bool = True
 
-    services: list["Service"] = Relationship(back_populates="category_rel")
-
 
 # ---------- Core user/auth ----------
 
@@ -42,18 +40,11 @@ class User(SQLModel, table=True):
     last_hajj_location: Optional[str] = None
     created_at: dt.datetime = Field(default_factory=dt.datetime.utcnow)
 
-    sessions: list["SessionToken"] = Relationship(back_populates="user")
-    passports: list["Passport"] = Relationship(back_populates="user")
-    driving_licenses: list["DrivingLicense"] = Relationship(back_populates="user")
-
-
 class SessionToken(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     token: str = Field(index=True, unique=True)
     user_id: int = Field(foreign_key="user.id")
     expires_at: dt.datetime
-
-    user: Optional[User] = Relationship(back_populates="sessions")
 
 
 # ---------- Services & requirements ----------
@@ -75,9 +66,6 @@ class Service(SQLModel, table=True):
     prerequisites: dict = Field(default_factory=dict, sa_column=Column(JSON))  # e.g., other services
     permissions: dict = Field(default_factory=dict, sa_column=Column(JSON))  # e.g., scopes/roles
 
-    requirements: list["ServiceRequirement"] = Relationship(back_populates="service")
-    category_rel: Optional[ServiceCategory] = Relationship(back_populates="services")
-
 
 class ServiceRequirement(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -86,8 +74,6 @@ class ServiceRequirement(SQLModel, table=True):
     field_type: str
     is_required: bool = True
     validator: Optional[str] = None  # description or regex
-
-    service: Optional[Service] = Relationship(back_populates="requirements")
 
 
 # ---------- Domain entities ----------
@@ -100,10 +86,7 @@ class Passport(SQLModel, table=True):
     expiry_date: Optional[dt.date] = None
     issue_place: Optional[str] = None
     status: Optional[str] = None
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
-
-    user: Optional[User] = Relationship(back_populates="passports")
-
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 class DrivingLicense(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -117,10 +100,7 @@ class DrivingLicense(SQLModel, table=True):
     passport_number: Optional[str] = None
     personal_photo_url: Optional[str] = None
     restrictions: Optional[str] = None
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
-
-    user: Optional[User] = Relationship(back_populates="driving_licenses")
-
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 class UserDocument(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -128,7 +108,7 @@ class UserDocument(SQLModel, table=True):
     doc_type: str
     status: str
     expiry_date: Optional[dt.date] = None
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 class Vehicle(SQLModel, table=True):
@@ -138,7 +118,7 @@ class Vehicle(SQLModel, table=True):
     status: str
     expiry_date: Optional[dt.date] = None
     insurance_expiry: Optional[dt.date] = None
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 class Worker(SQLModel, table=True):
@@ -155,7 +135,7 @@ class Worker(SQLModel, table=True):
     contract_expiry: Optional[dt.date] = None
     travel_status: Optional[str] = None
     status: str = "active"
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 class Violation(SQLModel, table=True):
@@ -175,7 +155,7 @@ class Violation(SQLModel, table=True):
     payment_status: str = "unpaid"  # unpaid, paid
     payment_date: Optional[dt.date] = None
     violation_datetime: Optional[dt.datetime] = None
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 class TrafficAccident(SQLModel, table=True):
@@ -184,7 +164,7 @@ class TrafficAccident(SQLModel, table=True):
     accident_number: Optional[str] = None
     accident_date: Optional[dt.date] = None
     plate_number: Optional[str] = None
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 class TravelRecord(SQLModel, table=True):
@@ -193,7 +173,7 @@ class TravelRecord(SQLModel, table=True):
     exit_date: Optional[dt.date] = None
     return_date: Optional[dt.date] = None
     destination: Optional[str] = None
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 class FamilyMember(SQLModel, table=True):
@@ -204,7 +184,7 @@ class FamilyMember(SQLModel, table=True):
     national_id: Optional[str] = None
     birth_place: Optional[str] = None
     birth_date: Optional[dt.date] = None
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 class Payment(SQLModel, table=True):
@@ -214,7 +194,7 @@ class Payment(SQLModel, table=True):
     status: str = "pending"  # pending, success, failed (mocked)
     reference: Optional[str] = Field(default=None, index=True)
     created_at: dt.datetime = Field(default_factory=dt.datetime.utcnow)
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 class Wallet(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -232,7 +212,7 @@ class WalletTransaction(SQLModel, table=True):
     reference: Optional[str] = None  # e.g., service code or invoice
     status: str = "completed"  # completed, pending, failed (for demo default completed)
     created_at: dt.datetime = Field(default_factory=dt.datetime.utcnow)
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 class Appointment(SQLModel, table=True):
@@ -242,7 +222,7 @@ class Appointment(SQLModel, table=True):
     location: Optional[str] = None
     scheduled_at: Optional[dt.datetime] = None
     status: str = "booked"
-    metadata: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: dict = Field(default_factory=dict, sa_column=Column(JSON))
 
 
 # ---------- Health reports & actions ----------
@@ -256,11 +236,9 @@ class HealthReport(SQLModel, table=True):
     summary: dict = Field(default_factory=dict, sa_column=Column(JSON))
     generated_at: dt.datetime = Field(default_factory=dt.datetime.utcnow)
 
-    actions: list["Action"] = Relationship(back_populates="report")
-
-
 class Action(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", index=True)
     report_id: Optional[int] = Field(default=None, foreign_key="healthreport.id", index=True)
     action_type: str
     status: str = "pending"
@@ -269,4 +247,3 @@ class Action(SQLModel, table=True):
     result: dict = Field(default_factory=dict, sa_column=Column(JSON))
     created_at: dt.datetime = Field(default_factory=dt.datetime.utcnow)
 
-    report: Optional[HealthReport] = Relationship(back_populates="actions")

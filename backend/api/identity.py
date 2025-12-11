@@ -12,6 +12,7 @@ router = APIRouter(prefix="/id", tags=["identity"])
 @router.post("/family-issue")
 def family_issue(user=Depends(get_current_user), session=Depends(get_session)):
     action = Action(
+        user_id=user.id,
         action_type="national_id_issue_family_member",
         status="pending",
         cost=None,
@@ -27,6 +28,7 @@ def family_issue(user=Depends(get_current_user), session=Depends(get_session)):
 @router.post("/renew")
 def renew(user=Depends(get_current_user), session=Depends(get_session)):
     action = Action(
+        user_id=user.id,
         action_type="national_id_renewal",
         status="pending",
         cost=None,
@@ -42,6 +44,7 @@ def renew(user=Depends(get_current_user), session=Depends(get_session)):
 @router.post("/replace-lost")
 def replace_lost(user=Depends(get_current_user), session=Depends(get_session)):
     action = Action(
+        user_id=user.id,
         action_type="national_id_replacement_lost",
         status="pending",
         cost=None,
@@ -57,6 +60,7 @@ def replace_lost(user=Depends(get_current_user), session=Depends(get_session)):
 @router.post("/replace-damaged")
 def replace_damaged(user=Depends(get_current_user), session=Depends(get_session)):
     action = Action(
+        user_id=user.id,
         action_type="national_id_replacement_damaged",
         status="pending",
         cost=None,
@@ -71,7 +75,7 @@ def replace_damaged(user=Depends(get_current_user), session=Depends(get_session)
 
 @router.get("/requests")
 def list_requests(user=Depends(get_current_user), session=Depends(get_session)):
-    stmt = select(Action).where(Action.action_type.like("national_id_%"))
+    stmt = select(Action).where(Action.user_id == user.id, Action.action_type.like("national_id_%"))
     actions = session.exec(stmt).all()
     return [
         {

@@ -1,4 +1,4 @@
-// File: /Users/rayidalshammari/Desktop/AbsherThon/aun-agent/app/page.tsx
+// File: /Users/ziyadalharbi/projects/Absher-Kackathon/front-end/aun-agent/app/page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

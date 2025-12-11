@@ -1,506 +1,668 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    FileText,
-    Car,
-    Users,
-    DollarSign,
-    Search,
-    Check,
-    AlertCircle,
-    Loader2,
-    Sparkles,
-    ArrowRight
-} from 'lucide-react';
-import { mockUserData } from '@/lib/mockData';
+import { useEffect, useMemo, useState } from "react";
 
-type Screen = 'landing' | 'scanning' | 'dashboard' | 'fixing' | 'success';
+type ChatMessage = { role: "assistant" | "user"; content: string };
+type Interrupt = {
+  ask?: string;
+  field?: string;
+  options?: any;
+  field_type?: string;
+};
+type StepLog = any;
 
-const iconMap: { [key: string]: any } = {
-    FileText,
-    Car,
-    Users,
-    DollarSign,
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+
+const staticServices = [
+  { icon: "📅", label: "مواعيد" },
+  { icon: "👥", label: "العمالة" },
+  { icon: "👨‍👩‍👧‍👦", label: "أفراد الأسرة" },
+  { icon: "🚗", label: "المركبات" },
+  { icon: "💻", label: "خدماتي" },
+];
+
+const suggestionChips = ["📄 الوثائق", "🚗 المركبات", "👨‍👩‍👧‍👦 العائلة"];
+
+const apiHeaders = (token?: string) => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
 };
 
+function useStoredToken() {
+  const [token, setToken] = useState<string | null>(null);
+  useEffect(() => {
+    const saved = localStorage.getItem("absher_token");
+    if (saved) setToken(saved);
+  }, []);
+  const save = (val: string) => {
+    localStorage.setItem("absher_token", val);
+    setToken(val);
+  };
+  const clear = () => {
+    localStorage.removeItem("absher_token");
+    setToken(null);
+  };
+  return { token, save, clear };
+}
+
 export default function Page() {
-    const [screen, setScreen] = useState<Screen>('landing');
-    const [scanProgress, setScanProgress] = useState(0);
-    const [currentScanStep, setCurrentScanStep] = useState(0);
-    const [displayScore, setDisplayScore] = useState(0);
-    const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-    const [fixingStep, setFixingStep] = useState(0);
-    const [isFixed, setIsFixed] = useState(false);
-    const [showToast, setShowToast] = useState(false);
+  const { token, save: saveToken, clear } = useStoredToken();
+  const effectiveToken = useMemo(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("absher_token");
+      return token || stored;
+    }
+    return token;
+  }, [token]);
+  const [view, setView] = useState<"login" | "dashboard">("login");
+  const [displayName, setDisplayName] = useState("Demo User");
+  const [loadingLogin, setLoadingLogin] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [nationalId, setNationalId] = useState("1111");
+  const [pin, setPin] = useState("123456");
 
-    const scanSteps = [
-        "فحص الوثائق...",
-        "فحص المخالفات...",
-        "فحص المركبات...",
-        "فحص العمالة...",
-        "تحليل البيانات...",
-    ];
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [interrupt, setInterrupt] = useState<Interrupt | null>(null);
+  const [steps, setSteps] = useState<StepLog[]>([]);
+  const [threadId, setThreadId] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [input, setInput] = useState("");
+  const [chatError, setChatError] = useState<string | null>(null);
 
-    // Start scan animation
-    const startScan = () => {
-        setScreen('scanning');
-        setScanProgress(0);
-        setCurrentScanStep(0);
+  // Restore session if token exists
+  useEffect(() => {
+    if (effectiveToken) {
+      setView("dashboard");
+      // Try to restore thread
+      const storedThread = localStorage.getItem("absher_thread_id");
+      if (storedThread) {
+        resumeThread(storedThread, { value: "استمرار" });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveToken]);
 
-        // Animate through steps
-        const stepInterval = setInterval(() => {
-            setCurrentScanStep((prev) => {
-                if (prev < scanSteps.length - 1) {
-                    return prev + 1;
-                }
-                clearInterval(stepInterval);
-                return prev;
-            });
-        }, 500);
+  const apiPost = async (path: string, body: any, withAuth = true) => {
+    const tokenToUse = withAuth ? effectiveToken : null;
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: apiHeaders(tokenToUse ?? undefined),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || res.statusText);
+    }
+    return res.json();
+  };
 
-        // Progress bar
-        const progressInterval = setInterval(() => {
-            setScanProgress((prev) => {
-                if (prev >= 100) {
-                    clearInterval(progressInterval);
-                    setTimeout(() => setScreen('dashboard'), 300);
-                    return 100;
-                }
-                return prev + 4;
-            });
-        }, 50);
-    };
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoadingLogin(true);
+    setLoginError(null);
+    try {
+      const data = await apiPost(
+        "/auth/login",
+        { national_id: nationalId, pin },
+        false
+      );
+      saveToken(data.token);
+      setDisplayName(data.display_name || "مستخدم أبشر");
+      setView("dashboard");
+    } catch (err: any) {
+      setLoginError("تعذر تسجيل الدخول. تحقق من الهوية أو الرقم السري.");
+    } finally {
+      setLoadingLogin(false);
+    }
+  };
 
-    // Animate score count-up
-    useEffect(() => {
-        if (screen === 'dashboard' && displayScore < mockUserData.overallScore) {
-            const timer = setTimeout(() => {
-                setDisplayScore((prev) => Math.min(prev + 1, isFixed ? mockUserData.updatedScore : mockUserData.overallScore));
-            }, 20);
-            return () => clearTimeout(timer);
-        }
-    }, [screen, displayScore, isFixed]);
+  const openChat = () => {
+    setChatOpen(true);
+    setChatError(null);
+    if (!messages.length && !interrupt && effectiveToken) {
+      sendMessage("مرحباً، أريد المساعدة");
+    }
+  };
 
-    // Handle fixing flow
-    const startFixing = () => {
-        setScreen('fixing');
-        setFixingStep(0);
+  const closeChat = () => {
+    setChatOpen(false);
+  };
 
-        mockUserData.fixingSteps.forEach((step, index) => {
-            setTimeout(() => {
-                setFixingStep(index + 1);
-                if (index === mockUserData.fixingSteps.length - 1) {
-                    setTimeout(() => {
-                        setScreen('success');
-                    }, 1000);
-                }
-            }, mockUserData.fixingSteps.slice(0, index + 1).reduce((acc, s) => acc + s.duration, 0));
-        });
-    };
+  const persistThread = (id: string) => {
+    localStorage.setItem("absher_thread_id", id);
+  };
 
-    // Return to dashboard after success
-    const returnToDashboard = () => {
-        setIsFixed(true);
-        setDisplayScore(0);
-        setScreen('dashboard');
-        setExpandedCategory(null);
-        setTimeout(() => setShowToast(true), 500);
-        setTimeout(() => setShowToast(false), 3500);
-    };
+  const applyResponse = (resp: any, userMessage?: string) => {
+    if (userMessage) {
+      setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    }
+    const backendMsgs = (resp.messages || []) as ChatMessage[];
+    setMessages((prev) => [...prev, ...backendMsgs]);
+    setInterrupt(resp.interrupt || null);
+    setSteps(resp.steps || []);
+    setThreadId(resp.thread_id);
+    if (resp.thread_id) persistThread(resp.thread_id);
+    setPending(false);
+  };
 
-    const getScoreColor = (score: number) => {
-        if (score >= 80) return 'text-absher-success';
-        if (score >= 60) return 'text-absher-warning';
-        return 'text-absher-critical';
-    };
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || pending) return;
+    if (!effectiveToken) {
+      setChatError("الرجاء تسجيل الدخول قبل بدء المحادثة.");
+      return;
+    }
+    setPending(true);
+    setChatError(null);
+    try {
+      const resp = await apiPost("/agent/chat", {
+        message: text.trim(),
+        thread_id: threadId,
+      });
+      applyResponse(resp, text.trim());
+      setInput("");
+    } catch (err: any) {
+      setChatError("فشل إرسال الرسالة. حاول مجدداً.");
+      setPending(false);
+    }
+  };
 
-    const getScoreBgColor = (score: number) => {
-        if (score >= 80) return 'bg-absher-success/10';
-        if (score >= 60) return 'bg-absher-warning/10';
-        return 'bg-absher-critical/10';
-    };
+  const resumeThread = async (tid: string, payload: any) => {
+    if (pending) return;
+    if (!effectiveToken) {
+      setChatError("الرجاء تسجيل الدخول قبل المتابعة.");
+      return;
+    }
+    setPending(true);
+    setChatError(null);
+    try {
+      const resp = await apiPost("/agent/resume", {
+        thread_id: tid,
+        value: payload,
+      });
+      applyResponse(resp);
+    } catch (err: any) {
+      setChatError("تعذر المتابعة. حاول مرة أخرى.");
+      setPending(false);
+    }
+  };
 
-    const getScoreBorderColor = (score: number) => {
-        if (score >= 80) return 'border-absher-success';
-        if (score >= 60) return 'border-absher-warning';
-        return 'border-absher-critical';
-    };
+  const handleInterruptSubmit = async (value: any) => {
+    if (!threadId) return;
+    await resumeThread(threadId, { value });
+  };
 
+  const handleLogout = () => {
+    clear();
+    localStorage.removeItem("absher_thread_id");
+    setMessages([]);
+    setInterrupt(null);
+    setSteps([]);
+    setThreadId(null);
+    setChatOpen(false);
+    setView("login");
+  };
+
+  const stepChips = useMemo(() => {
+    if (!steps?.length) return null;
     return (
-        <div className="min-h-screen bg-gradient-to-br from-absher-primary via-emerald-700 to-teal-800 flex items-center justify-center p-4">
-            <AnimatePresence mode="wait">
-                {/* LANDING PAGE */}
-                {screen === 'landing' && (
-                    <motion.div
-                        key="landing"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="text-center max-w-2xl"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="mb-8"
-                        >
-                            <Sparkles className="w-20 h-20 text-yellow-300 mx-auto mb-6" />
-                            <h1 className="text-6xl font-bold text-white mb-4">
-                                عون - الوكيل الذكي
-                            </h1>
-                            <p className="text-2xl text-emerald-100 mb-12">
-                                افحص حالتك الحكومية بضغطة زر واحدة
-                            </p>
-                        </motion.div>
-
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={startScan}
-                            className="bg-white text-absher-primary px-12 py-6 rounded-2xl text-2xl font-bold shadow-2xl hover:shadow-white/20 transition-all flex items-center gap-3 mx-auto"
-                        >
-                            <Search className="w-8 h-8" />
-                            ابدأ الفحص الشامل
-                        </motion.button>
-                    </motion.div>
-                )}
-
-                {/* SCANNING ANIMATION */}
-                {screen === 'scanning' && (
-                    <motion.div
-                        key="scanning"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="text-center max-w-xl w-full"
-                    >
-                        <div className="bg-white rounded-3xl shadow-2xl p-12">
-                            <Loader2 className="w-16 h-16 text-absher-primary animate-spin mx-auto mb-8" />
-                            <h2 className="text-3xl font-bold text-gray-800 mb-8">
-                                جاري الفحص...
-                            </h2>
-
-                            <div className="space-y-4 mb-8">
-                                {scanSteps.map((step, index) => (
-                                    <motion.div
-                                        key={index}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{
-                                            opacity: index <= currentScanStep ? 1 : 0.3,
-                                            x: 0,
-                                        }}
-                                        className="flex items-center gap-3 text-right"
-                                    >
-                                        {index < currentScanStep ? (
-                                            <Check className="w-6 h-6 text-absher-success" />
-                                        ) : index === currentScanStep ? (
-                                            <Loader2 className="w-6 h-6 text-absher-primary animate-spin" />
-                                        ) : (
-                                            <div className="w-6 h-6 rounded-full border-2 border-gray-300" />
-                                        )}
-                                        <span className="text-lg text-gray-700">{step}</span>
-                                    </motion.div>
-                                ))}
-                            </div>
-
-                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                                <motion.div
-                                    className="h-full bg-gradient-to-r from-absher-primary to-emerald-500"
-                                    initial={{ width: '0%' }}
-                                    animate={{ width: `${scanProgress}%` }}
-                                    transition={{ duration: 0.3 }}
-                                />
-                            </div>
-                            <p className="text-gray-500 mt-3 text-lg">٪{scanProgress}</p>
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* DASHBOARD */}
-                {screen === 'dashboard' && (
-                    <motion.div
-                        key="dashboard"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="max-w-5xl w-full"
-                    >
-                        <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
-                            {/* Header */}
-                            <div className="text-center mb-10">
-                                <h2 className="text-4xl font-bold text-gray-800 mb-2">
-                                    نتيجة الفحص الشامل
-                                </h2>
-                                <p className="text-gray-500 text-lg">
-                                    مرحباً، {mockUserData.name}
-                                </p>
-                                <p className="text-gray-400 text-sm">آخر فحص: الآن</p>
-                            </div>
-
-                            {/* Score Circle */}
-                            <div className="flex justify-center mb-12">
-                                <div className={`relative ${getScoreBgColor(isFixed ? mockUserData.updatedScore : mockUserData.overallScore)} rounded-full p-8`}>
-                                    <div className={`w-48 h-48 rounded-full border-8 ${getScoreBorderColor(isFixed ? mockUserData.updatedScore : mockUserData.overallScore)} flex flex-col items-center justify-center`}>
-                                        <span className={`text-6xl font-bold ${getScoreColor(isFixed ? mockUserData.updatedScore : mockUserData.overallScore)}`}>
-                                            {displayScore}
-                                        </span>
-                                        <span className="text-3xl text-gray-400 font-light">/100</span>
-                                        <span className={`text-sm font-semibold mt-2 px-4 py-1 rounded-full ${isFixed ? 'bg-absher-success text-white' : displayScore >= 80 ? 'bg-absher-success text-white' : displayScore >= 60 ? 'bg-absher-warning text-white' : 'bg-absher-critical text-white'}`}>
-                                            {isFixed ? mockUserData.updatedStatus : mockUserData.initialStatus}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Categories */}
-                            <div className="space-y-4">
-                                {mockUserData.categories.map((category) => {
-                                    const Icon = iconMap[category.icon];
-                                    const isExpanded = expandedCategory === category.id;
-                                    const currentScore = isFixed && category.id === 'workers' ? category.updatedScore : category.score;
-
-                                    return (
-                                        <motion.div
-                                            key={category.id}
-                                            layout
-                                            className={`border-2 rounded-2xl overflow-hidden transition-all cursor-pointer ${currentScore! >= 80
-                                                    ? 'border-absher-success bg-absher-success/5'
-                                                    : currentScore! >= 60
-                                                        ? 'border-absher-warning bg-absher-warning/5'
-                                                        : 'border-absher-critical bg-absher-critical/5'
-                                                } ${isExpanded ? 'shadow-lg' : 'hover:shadow-md'}`}
-                                            onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
-                                        >
-                                            <div className="p-6 flex items-center justify-between">
-                                                <div className="flex items-center gap-4 flex-1">
-                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${currentScore! >= 80
-                                                            ? 'bg-absher-success text-white'
-                                                            : currentScore! >= 60
-                                                                ? 'bg-absher-warning text-white'
-                                                                : 'bg-absher-critical text-white'
-                                                        }`}>
-                                                        <Icon className="w-6 h-6" />
-                                                    </div>
-                                                    <div className="flex-1 text-right">
-                                                        <h3 className="text-xl font-semibold text-gray-800">
-                                                            {category.name}
-                                                        </h3>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className={`text-3xl font-bold ${getScoreColor(currentScore!)}`}>
-                                                        {currentScore}/100
-                                                    </span>
-                                                    <span className="text-2xl">
-                                                        {currentScore! >= 80 ? '✅' : currentScore! >= 60 ? '⚠️' : '❌'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Expanded Details for Workers */}
-                                            {isExpanded && category.id === 'workers' && !isFixed && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: 'auto' }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    className="border-t-2 border-absher-critical/20 p-6 bg-white"
-                                                >
-                                                    {category.items.map((worker: any, idx) => (
-                                                        <div key={idx} className="space-y-4">
-                                                            <div className="bg-gray-50 rounded-xl p-5">
-                                                                <h4 className="text-lg font-bold text-gray-800 mb-2">
-                                                                    👷 العامل: {worker.name}
-                                                                </h4>
-                                                                <p className="text-gray-600">الجنسية: {worker.nationality}</p>
-                                                                <p className="text-gray-600">رقم الإقامة: {worker.iqamaNumber}</p>
-                                                            </div>
-
-                                                            <div className="space-y-3">
-                                                                <h5 className="text-lg font-semibold text-gray-800">المشاكل:</h5>
-                                                                {worker.issues.map((issue: any, issueIdx: number) => (
-                                                                    <div
-                                                                        key={issueIdx}
-                                                                        className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl"
-                                                                    >
-                                                                        <span className="text-xl">{issue.icon}</span>
-                                                                        <p className="text-gray-700 flex-1 text-right">{issue.message}</p>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-
-                                                            <div className="bg-gray-100 rounded-xl p-5">
-                                                                <p className="text-xl font-bold text-gray-800">
-                                                                    التكلفة المتوقعة: {worker.totalCost.toLocaleString('ar-SA')} ريال
-                                                                </p>
-                                                            </div>
-
-                                                            <motion.button
-                                                                whileHover={{ scale: 1.02 }}
-                                                                whileTap={{ scale: 0.98 }}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    startFixing();
-                                                                }}
-                                                                className="w-full bg-gradient-to-r from-absher-primary to-emerald-600 text-white px-8 py-5 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
-                                                            >
-                                                                <span className="text-2xl">🚀</span>
-                                                                إصلاح كل شيء بضغطة واحدة
-                                                            </motion.button>
-                                                        </div>
-                                                    ))}
-                                                </motion.div>
-                                            )}
-                                        </motion.div>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Back to landing */}
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => {
-                                    setScreen('landing');
-                                    setDisplayScore(0);
-                                    setIsFixed(false);
-                                    setExpandedCategory(null);
-                                }}
-                                className="mt-8 w-full bg-gray-100 text-gray-700 px-8 py-4 rounded-2xl text-lg font-semibold hover:bg-gray-200 transition-all"
-                            >
-                                فحص جديد
-                            </motion.button>
-                        </div>
-
-                        {/* Toast Notification */}
-                        <AnimatePresence>
-                            {showToast && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 50 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 50 }}
-                                    className="fixed bottom-8 right-8 bg-absher-success text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3"
-                                >
-                                    <Check className="w-6 h-6" />
-                                    <span className="text-lg font-semibold">
-                                        تم حل {mockUserData.successDetails.resolvedIssues} مشاكل بنجاح ✓
-                                    </span>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </motion.div>
-                )}
-
-                {/* FIXING ANIMATION */}
-                {screen === 'fixing' && (
-                    <motion.div
-                        key="fixing"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="text-center max-w-xl w-full"
-                    >
-                        <div className="bg-white rounded-3xl shadow-2xl p-12">
-                            <Loader2 className="w-16 h-16 text-absher-primary animate-spin mx-auto mb-8" />
-                            <h2 className="text-3xl font-bold text-gray-800 mb-8">
-                                جاري إصلاح المشاكل...
-                            </h2>
-
-                            <div className="space-y-4">
-                                {mockUserData.fixingSteps.map((step, index) => (
-                                    <motion.div
-                                        key={index}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{
-                                            opacity: index < fixingStep ? 1 : 0.3,
-                                            x: 0,
-                                        }}
-                                        className="flex items-start gap-3 text-right"
-                                    >
-                                        {index < fixingStep ? (
-                                            <Check className="w-6 h-6 text-absher-success flex-shrink-0 mt-1" />
-                                        ) : index === fixingStep - 1 ? (
-                                            <Loader2 className="w-6 h-6 text-absher-primary animate-spin flex-shrink-0 mt-1" />
-                                        ) : (
-                                            <div className="w-6 h-6 rounded-full border-2 border-gray-300 flex-shrink-0 mt-1" />
-                                        )}
-                                        <span className="text-lg text-gray-700 flex-1">{step.text}</span>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* SUCCESS SCREEN */}
-                {screen === 'success' && (
-                    <motion.div
-                        key="success"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="text-center max-w-2xl w-full"
-                    >
-                        <div className="bg-white rounded-3xl shadow-2xl p-12">
-                            {/* Success Animation */}
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                                className="mb-8"
-                            >
-                                <div className="w-32 h-32 bg-absher-success rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                                    <Check className="w-16 h-16 text-white" />
-                                </div>
-                                <h2 className="text-5xl font-bold text-gray-800 mb-4">
-                                    تم بنجاح! ✅
-                                </h2>
-                            </motion.div>
-
-                            {/* Score Update */}
-                            <div className="mb-8">
-                                <div className="flex items-center justify-center gap-4 text-4xl font-bold">
-                                    <span className="text-absher-critical">64</span>
-                                    <ArrowRight className="w-8 h-8 text-gray-400" />
-                                    <span className="text-absher-success">98</span>
-                                </div>
-                            </div>
-
-                            {/* Details */}
-                            <div className="space-y-4 mb-8 bg-gray-50 rounded-2xl p-6">
-                                <div className="text-right">
-                                    <p className="text-gray-600">رقم المعاملة:</p>
-                                    <p className="text-xl font-bold text-gray-800">
-                                        {mockUserData.successDetails.transactionId}
-                                    </p>
-                                </div>
-                                <div className="border-t border-gray-200 my-4"></div>
-                                <div className="text-right">
-                                    <p className="text-absher-success font-semibold text-lg mb-2">
-                                        ✅ تم حل جميع المشاكل
-                                    </p>
-                                    <p className="text-gray-700">
-                                        التأمين ساري حتى: {mockUserData.successDetails.newInsuranceExpiry}
-                                    </p>
-                                    <p className="text-gray-700">
-                                        الإقامة سارية حتى: {mockUserData.successDetails.newIqamaExpiry}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={returnToDashboard}
-                                className="w-full bg-gradient-to-r from-absher-primary to-emerald-600 text-white px-8 py-5 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl transition-all"
-                            >
-                                العودة للوحة التحكم
-                            </motion.button>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+      <div className="flex flex-wrap gap-2 mt-4">
+        {steps.map((s: any, idx: number) => (
+          <span
+            key={idx}
+            className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-xs"
+          >
+            {Object.keys(s)[0]}
+          </span>
+        ))}
+      </div>
     );
+  }, [steps]);
+
+  const renderOptions = (opts: any) => {
+    if (!opts) return null;
+    if (Array.isArray(opts)) {
+      return (
+        <div className="flex flex-wrap gap-2 mt-3">
+          {opts.map((o, idx) => (
+            <button
+              key={idx}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm hover:border-green-500 transition"
+              onClick={() => handleInterruptSubmit(o)}
+            >
+              {typeof o === "object" ? JSON.stringify(o) : String(o)}
+            </button>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const renderInterruptCard = () => {
+    if (!interrupt?.ask) return null;
+    const fieldType = interrupt.field_type || "text";
+    if (fieldType === "enum" || fieldType === "select") {
+      return (
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+          <p className="text-gray-800 font-semibold mb-2">{interrupt.ask}</p>
+          {renderOptions(interrupt.options)}
+        </div>
+      );
+    }
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <p className="text-gray-800 font-semibold mb-3">{interrupt.ask}</p>
+        <div className="flex gap-2">
+          <input
+            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm"
+            placeholder="اكتب إجابتك هنا"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleInterruptSubmit((e.target as HTMLInputElement).value);
+                (e.target as HTMLInputElement).value = "";
+              }
+            }}
+          />
+          <button
+            className="bg-green-600 text-white px-4 py-2 rounded-xl"
+            onClick={(e) => {
+              const val = (e.currentTarget.previousSibling as HTMLInputElement)
+                ?.value;
+              handleInterruptSubmit(val);
+              (e.currentTarget.previousSibling as HTMLInputElement).value = "";
+            }}
+          >
+            إرسال
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const MessageBubble = ({ msg }: { msg: ChatMessage }) => {
+    const isAssistant = msg.role === "assistant";
+    return (
+      <div className={`flex gap-3 ${isAssistant ? "" : "justify-end"}`}>
+        {isAssistant && (
+          <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-sm">🤖</span>
+          </div>
+        )}
+        <div
+          className={`max-w-[80%] px-5 py-3 rounded-2xl shadow-sm ${
+            isAssistant
+              ? "bg-white rounded-tr-none"
+              : "bg-green-600 text-white rounded-tl-none"
+          }`}
+        >
+          <p className="leading-relaxed text-sm">{msg.content}</p>
+        </div>
+        {!isAssistant && (
+          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-emerald-700 text-sm">👤</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const LoginView = (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="bg-white border border-gray-100 rounded-3xl shadow-xl max-w-4xl w-full grid lg:grid-cols-2">
+        <div className="bg-gradient-to-br from-green-700 to-emerald-600 text-white rounded-3xl lg:rounded-r-none p-10 flex flex-col justify-between">
+          <div>
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6">
+              <img
+                src="/portal/individuals/assets/images/logo.svg"
+                className="w-12 h-12"
+                alt="Absher"
+              />
+            </div>
+            <h1 className="text-3xl font-bold mb-3">أبشر - تسجيل الدخول</h1>
+            <p className="text-emerald-100 text-sm leading-relaxed">
+              أدخل بيانات الهوية والرمز السري للوصول إلى لوحة التحكم والمساعد
+              الذكي.
+            </p>
+          </div>
+          <div className="text-emerald-100 text-sm space-y-1">
+            <p>هوية تجريبية: 1111</p>
+            <p>رمز سري: 123456</p>
+          </div>
+        </div>
+        <form className="p-10 space-y-6" onSubmit={handleLogin}>
+          <div className="space-y-2">
+            <label className="text-gray-700 font-semibold">رقم الهوية</label>
+            <input
+              value={nationalId}
+              onChange={(e) => setNationalId(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-right focus:border-green-600 outline-none"
+              placeholder="أدخل رقم الهوية"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-gray-700 font-semibold">الرمز السري</label>
+            <input
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              type="password"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-right focus:border-green-600 outline-none"
+              placeholder="أدخل الرمز السري"
+            />
+          </div>
+          {loginError && <p className="text-red-600 text-sm">{loginError}</p>}
+          <button
+            type="submit"
+            disabled={loadingLogin}
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition disabled:opacity-60"
+          >
+            {loadingLogin ? "جاري الدخول..." : "دخول"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+
+  const DashboardHeader = (
+    <header className="bg-white border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="w-8 h-8 bg-green-600 rounded-full"></div>
+          <div className="flex flex-col items-end">
+            <div className="text-xs text-gray-500">VISION</div>
+            <div className="text-2xl font-bold text-gray-800">2030</div>
+            <div className="text-xs text-gray-600">
+              المملكة العربية السعودية
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+              <img
+                src="/portal/individuals/assets/images/personal_photo.png"
+                alt="User"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+        <nav className="flex-1 flex items-center justify-center gap-4 mx-8">
+          {[
+            { label: "لوحة المعلومات" },
+            { label: "تعديل معلومات المستخدم" },
+            { label: "الاشعارات" },
+            { label: "دليل الخدمات" },
+            { label: "English" },
+            { label: "تسجيل الخروج", onClick: handleLogout },
+          ].map((item, idx) => (
+            <button
+              key={idx}
+              className="flex flex-col items-center gap-1 px-4 py-2 border-r border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-50 rounded text-left"
+              onClick={item.onClick}
+            >
+              <span className="text-xs text-gray-700 text-center font-medium">
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </nav>
+        <div className="flex-shrink-0">
+          <div className="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center overflow-hidden">
+            <img
+              src="/portal/individuals/assets/images/logo.svg"
+              alt="Logo"
+              className="w-full h-full p-2 object-contain bg-white"
+            />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+
+  const DashboardMain = (
+    <div className="flex flex-col lg:flex-row gap-6 p-6 max-w-7xl mx-auto">
+      <div className="w-full lg:w-64 space-y-3">
+        {[
+          { icon: "zap", label: "الخدمات الإلكترونية", active: true },
+          { icon: "eye", label: "التقاويض" },
+          { icon: "help-circle", label: "استبيانات أبشر" },
+          { icon: "dollar-sign", label: "المدفوعات الحكومية" },
+        ].map((item, idx) => (
+          <button
+            key={idx}
+            className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border-r-4 transition-all ${
+              item.active
+                ? "bg-green-50 border-r-green-600"
+                : "bg-gray-50 border-r-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            <span className="w-5 h-5 text-green-600">•</span>
+            <span className="font-medium text-sm text-gray-700">
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="flex-1">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-green-600 font-bold text-lg">بحث</div>
+            <input
+              type="text"
+              placeholder="اكتب هنا للبحث"
+              className="flex-1 outline-none text-sm text-gray-600 placeholder:text-gray-400 text-right"
+            />
+            <span className="w-5 h-5 text-gray-400">‹</span>
+          </div>
+        </div>
+        <div className="space-y-12">
+          <div className="grid grid-cols-5 gap-6">
+            {staticServices.map((svc, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-xl shadow-sm p-6 text-center h-full flex flex-col justify-between items-center transition-transform hover:-translate-y-1 border border-gray-100 cursor-pointer"
+              >
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100 mx-auto">
+                  <span className="text-4xl">{svc.icon}</span>
+                </div>
+                <div className="w-full mt-auto">
+                  <div className="bg-green-700 text-white py-3 px-4 rounded-lg font-bold w-full text-sm">
+                    {svc.label}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="flex justify-center items-center gap-4 mt-4">
+                <div className="w-32 h-px bg-gray-300"></div>
+                <h2 className="text-xl font-bold text-gray-500 bg-white px-4 z-10 relative">
+                  خدمات أخرى
+                </h2>
+                <div className="w-32 h-px bg-gray-300"></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 px-8 relative">
+              <button className="p-2 hover:bg-gray-100 rounded absolute left-0 z-10">
+                <span className="w-8 h-8 text-green-600 font-bold">‹</span>
+              </button>
+              <div className="flex-1 flex gap-4 overflow-hidden justify-center">
+                {[
+                  { icon: "✈️", text: "إيقاف الخدمات وقيود السفر" },
+                  { icon: "📊", text: "مزاد اللوحات الإلكتروني" },
+                  { icon: "🤝", text: "مبايعة المركبات" },
+                  { icon: "📋", text: "تقارير أبشر", badge: "جديد" },
+                  { icon: "📋", text: "إصدار شهادة خلو سوابق", badge: "جديد" },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex-1 bg-white border border-gray-200 rounded-lg p-6 flex flex-col items-center gap-4 relative min-w-[180px] max-w-[220px] shadow-sm"
+                  >
+                    {item.badge && (
+                      <div className="absolute top-0 right-0 bg-red-600 text-white px-3 py-1 text-[10px] font-bold transform translate-x-2 -translate-y-2 shadow-md z-10">
+                        {item.badge}
+                      </div>
+                    )}
+                    <span className="text-4xl text-green-600">{item.icon}</span>
+                    <p className="text-sm font-semibold text-gray-500 text-center">
+                      {item.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <button className="p-2 hover:bg-gray-100 rounded absolute right-0 z-10">
+                <span className="w-8 h-8 text-green-600 font-bold">›</span>
+              </button>
+            </div>
+            <div className="flex justify-center gap-2 mt-4">
+              <button className="w-3 h-3 rounded-full bg-green-600"></button>
+              <button className="w-3 h-3 rounded-full bg-gray-300"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ChatModal = (
+    <div
+      className={`${
+        chatOpen ? "flex" : "hidden"
+      } fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] items-center justify-center p-4`}
+    >
+      <div className="relative w-full max-w-4xl h-[85vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+              <span className="text-green-600 text-lg">🤖</span>
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-lg">
+                عون - المساعد الذكي
+              </h3>
+              <p className="text-emerald-100 text-sm">متصل • جاهز للمساعدة</p>
+            </div>
+          </div>
+          <button
+            onClick={closeChat}
+            className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-full transition-all flex items-center gap-2"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="relative flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+            {!messages.length && (
+              <>
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm">🤖</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="bg-white rounded-2xl rounded-tr-none px-5 py-3 shadow-sm">
+                      <p className="text-gray-800 leading-relaxed">
+                        مرحباً! أنا عون، مساعدك الذكي في خدمات أبشر 👋
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-400 mt-1 inline-block">
+                      الآن
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm">🤖</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="bg-white rounded-2xl rounded-tr-none px-5 py-3 shadow-sm">
+                      <p className="text-gray-800 leading-relaxed">
+                        أستطيع مساعدتك في الخدمات، المخالفات، الحوادث، وتجديد
+                        الوثائق.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 flex-shrink-0"></div>
+                  <div className="flex-1 space-y-2">
+                    <p className="text-gray-500 text-sm">
+                      أو اختر من الاقتراحات:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestionChips.map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => sendMessage(c)}
+                          className="bg-white text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-gray-100 transition-all shadow-sm"
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+            {messages.map((m, idx) => (
+              <MessageBubble key={idx} msg={m} />
+            ))}
+            {stepChips}
+            {interrupt && renderInterruptCard()}
+            {!effectiveToken && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-4 text-sm">
+                الرجاء تسجيل الدخول لبدء المحادثة.
+              </div>
+            )}
+            {chatError && (
+              <div className="text-red-600 text-sm">{chatError}</div>
+            )}
+          </div>
+          <div className="border-t border-gray-200 p-4 bg-white">
+            <div className="flex gap-3">
+              <input
+                type="text"
+                placeholder="اكتب رسالتك هنا..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") sendMessage(input);
+                }}
+                className="flex-1 px-4 py-3 rounded-full border-2 border-gray-200 text-gray-700 text-right"
+                dir="rtl"
+                disabled={!effectiveToken}
+              />
+              <button
+                onClick={() => sendMessage(input)}
+                disabled={pending || !effectiveToken}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full shadow hover:shadow-lg transition disabled:opacity-60"
+              >
+                إرسال
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const DashboardView = (
+    <div className="bg-gray-50 min-h-screen">
+      {DashboardHeader}
+      {DashboardMain}
+      <button
+        onClick={openChat}
+        className="fixed bottom-6 left-6 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-full shadow-2xl hover:shadow-green-500/50 transition-all duration-300 flex items-center gap-3 z-50 animate-pulse hover:animate-none group"
+      >
+        <span className="text-lg font-bold">عون - المساعد الذكي</span>
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-ping"></span>
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full"></span>
+      </button>
+      {ChatModal}
+    </div>
+  );
+
+  return view === "login" ? LoginView : DashboardView;
 }
