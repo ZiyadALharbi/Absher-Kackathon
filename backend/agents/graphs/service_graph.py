@@ -146,6 +146,7 @@
 
 from __future__ import annotations
 import json
+import logging
 from typing import Dict, Any, List
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command, interrupt
@@ -163,8 +164,11 @@ from backend.agents.tools.common import (
     validate_with_tools,
     execute_service_action,
     list_violations,
+    get_violation_by_number,
 )
 from backend.agents.tools import tool_wrappers as tool_wrappers
+
+logger = logging.getLogger(__name__)
 
 #
 # -------------------------------------------------------------------
@@ -181,8 +185,10 @@ _intent_prompt = ChatPromptTemplate.from_template(
 
 الأكواد المتاحة:
 - renew_driving_license
+- traffic_violation_payment
 - traffic_violation_payment_extension
 - traffic_violation_objection
+- traffic_violations_comprehensive_inquiry
 - traffic_accident_report
 - traffic_accident_objection_or_waiver
 - national_id_issue_family_member
@@ -194,6 +200,8 @@ _intent_prompt = ChatPromptTemplate.from_template(
 "أبغى أجدد الرخصة" -> service, renew_driving_license
 "كيف أجدد؟" -> info
 "أبغى أمدد مهلة المخالفة" -> service, traffic_violation_payment_extension
+"ابي اسدد مخالفة" -> service, traffic_violation_payment
+"اعرض مخالفاتي" -> service, traffic_violations_comprehensive_inquiry
 
 نص المستخدم: {user_goal}
 
@@ -230,9 +238,12 @@ def intent_node(state: ServiceState) -> Dict[str, Any]:
             "service_code": state["service_code"],
             "user_goal": state.get("user_goal") or "متابعة خدمة",
         }
+
     user_goal = state.get("user_goal") or ""
-    raw = _intent_chain.invoke({"user_goal": user_goal})
+
+    mode, service_code = "info", None
     try:
+        raw = _intent_chain.invoke({"user_goal": user_goal})
         data = json.loads(raw)
         mode = data.get("mode", "info")
         service_code = data.get("service_code")
@@ -240,16 +251,6 @@ def intent_node(state: ServiceState) -> Dict[str, Any]:
         mode, service_code = "info", None
 
     if mode != "service":
-        # Heuristic fallback for common payment intents (e.g., paying a traffic violation)
-        goal_lower = user_goal.lower()
-        if any(k in goal_lower for k in ["مخالف", "مخالفة", "violation"]) and any(
-            k in goal_lower for k in ["سداد", "سدد", "تسديد", "دفع", "pay"]
-        ):
-            return {
-                "mode": "service",
-                "service_code": "traffic_violation_payment",
-                "user_goal": user_goal or "متابعة خدمة",
-            }
         return {"mode": "info", "info_answer": None, "user_goal": user_goal or "استفسار"}
 
     return {
@@ -275,7 +276,31 @@ def load_requirements_node(state: ServiceState) -> Dict[str, Any]:
     if not service_code:
         return {"missing_slots": []}
 
-    req = load_service_requirements_from_store(service_code)
+    # Inline fallback for violation payment (avoid touching data files)
+    if service_code == "traffic_violation_payment":
+        req = {
+            "code": service_code,
+            "requires_payment": True,
+            "payment": {
+                "wallet_type": "gov_wallet",
+                "requires_sufficient_balance": True,
+                "fee": 0,
+                "notes": "سيتم احتساب مبلغ السداد من بيانات المخالفة.",
+            },
+            "requirements": [
+                {
+                    "key": "violation_number",
+                    "type": "input",
+                    "required": True,
+                    "source": "user",
+                    "field_type": "select",
+                    "prompt": "اختر مخالفة غير مسددة للسداد",
+                }
+            ],
+        }
+    else:
+        req = load_service_requirements_from_store(service_code)
+
     collected = dict(state.get("collected_slots", {}))
 
     user_id = state.get("user_id")
@@ -294,42 +319,63 @@ def load_requirements_node(state: ServiceState) -> Dict[str, Any]:
                         "field_type": r.get("field_type") or "text",
                         "options": r.get("options"),
                         "required": True,
+                        "source": r.get("source", "user"),
                     }
                 )
 
-    # If service is about violations and violation_number is not collected, propose user choices from unpaid violations
-    if (
-        "violation" in (service_code or "")
-        and "violation_number" not in collected
-    ):
+    # Violations: always prompt for selection; do not auto-fill.
+    if service_code in ("traffic_violation_payment", "traffic_violations_comprehensive_inquiry"):
         try:
             from sqlmodel import Session
             from backend.db import engine
 
+            user_id_val = state.get("user_id")
             with Session(engine) as session:
-                unpaid = list_violations(session, state.get("user_id"), status="unpaid")
-                if unpaid:
-                    options = [
-                        {
-                            "violation_number": v.violation_number,
-                            "city": v.city,
-                            "amount": v.amount,
-                            "status": v.payment_status,
-                            "description": v.description,
-                        }
-                        for v in unpaid
-                    ]
-                    missing_slots.append(
-                        {
-                            "field": "violation_number",
-                            "prompt": "اختر مخالفة غير مسددة للسداد",
-                            "field_type": "select",
-                            "options": options,
-                            "required": True,
-                        }
-                    )
+                if service_code == "traffic_violation_payment":
+                    viols = list_violations(session, user_id_val, status="unpaid")
+                    prompt_text = "اختر مخالفة غير مسددة للسداد"
+                else:
+                    viols = list_violations(session, user_id_val, status=None)
+                    prompt_text = "اختر مخالفة لعرض تفاصيلها"
+
+                collected.pop("violation_number", None)
+                options = [
+                    {
+                        "violation_number": v.violation_number,
+                        "city": v.city,
+                        "amount": v.amount,
+                        "status": v.payment_status,
+                        "description": v.description,
+                    }
+                    for v in (viols or [])
+                ]
+                # If no violations, still emit an option to inform the user
+                if not options:
+                    options = [{"violation_number": None, "description": "لا توجد مخالفات متاحة"}]
+
+                missing_slots.append(
+                    {
+                        "field": "violation_number",
+                        "prompt": prompt_text,
+                        "field_type": "select",
+                        "options": options,
+                        "required": True,
+                        "source": "user",
+                    }
+                )
         except Exception:
-            pass
+            logger.exception("Failed to build violation selection options", exc_info=True)
+            # Even if DB lookup fails, emit a single informative option so interrupt still triggers
+            missing_slots.append(
+                {
+                    "field": "violation_number",
+                    "prompt": "اختر مخالفة",
+                    "field_type": "select",
+                    "options": [{"violation_number": None, "description": "تعذر جلب المخالفات"}],
+                    "required": True,
+                    "source": "user",
+                }
+            )
 
     return {"missing_slots": missing_slots, "collected_slots": collected, "requirements_cache": req}
 
@@ -407,7 +453,16 @@ def tool_agent_node(state: ServiceState) -> Dict[str, Any]:
 
     for call in getattr(ai_msg, "tool_calls", []) or []:
         name = call.get("name")
-        args = call.get("args", {}) or {}
+        raw_args = call.get("args", {}) or {}
+        args = dict(raw_args)
+        # Enforce state-derived values if missing/zero
+        if "user_id" not in args or args.get("user_id") in (None, 0):
+            args["user_id"] = state.get("user_id")
+        if "service_code" not in args or not args.get("service_code"):
+            args["service_code"] = state.get("service_code")
+        if "collected_slots" not in args or not args.get("collected_slots"):
+            args["collected_slots"] = state.get("collected_slots", {})
+
         tool = tool_map.get(name)
         if not tool:
             continue
@@ -471,6 +526,33 @@ def summarize_node(state: ServiceState) -> Dict[str, Any]:
         content = state.get("info_answer") or "تم الرد على الاستفسار."
     else:
         content = f"تم تنفيذ الخدمة {state.get('service_code')} (تجريبي)."
+
+    # Enrich summary for violations with selected violation details
+    try:
+        if state.get("service_code") in (
+            "traffic_violation_payment",
+            "traffic_violation_objection",
+            "traffic_violation_payment_extension",
+            "traffic_violations_comprehensive_inquiry",
+        ):
+            vnum = state.get("collected_slots", {}).get("violation_number")
+            if vnum:
+                from sqlmodel import Session
+                from backend.db import engine
+
+                with Session(engine) as session:
+                    viol = get_violation_by_number(session, state.get("user_id"), vnum)
+                    if viol:
+                        details = f"رقم المخالفة: {viol.violation_number} | المبلغ: {viol.amount} | الحالة: {viol.payment_status}"
+                        if state.get("service_code") == "traffic_violation_payment":
+                            content = f"تم تنفيذ السداد للمخالفة {viol.violation_number}. المبلغ: {viol.amount}."
+                        elif state.get("service_code") == "traffic_violations_comprehensive_inquiry":
+                            content = f"تفاصيل المخالفة {viol.violation_number}: المبلغ {viol.amount}، الحالة {viol.payment_status}."
+                        else:
+                            content = content + f" | {details}"
+    except Exception:
+        pass
+
     return {
         "messages": state.get("messages", []) + [{"role": "assistant", "content": content}]
     }
@@ -502,15 +584,6 @@ def build_service_graph():
         lambda s: "human_review" if s.get("human_required") else "summarize",
         {"human_review": "human_review", "summarize": "summarize"},
     )
-    # Deterministic fallback path (kept for safety / future toggles)
-    graph.add_edge("slot_fill", "validate")
-    graph.add_conditional_edges(
-        "validate",
-        lambda s: "human_review" if s.get("human_required") else "act",
-        {"human_review": "human_review", "act": "act"},
-    )
-    graph.add_edge("human_review", "act")
-    graph.add_edge("act", "summarize")
     graph.add_edge("summarize", END)
 
     return graph.compile(

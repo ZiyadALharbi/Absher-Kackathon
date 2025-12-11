@@ -45,8 +45,13 @@ def _resume_graph(user_id: int, thread_id: str, value: Dict[str, Any]):
 def chat(payload: ChatRequest, user=Depends(get_current_user)):
     result, thread_id = _invoke_graph(user.id, payload.message, payload.thread_id)
     interrupt_payload = None
-    if isinstance(result, dict) and "ask" in result:
-        interrupt_payload = result["ask"]
+    if isinstance(result, dict):
+        if "ask" in result:
+            interrupt_payload = result["ask"]
+        elif "__interrupt__" in result:
+            interrupts = result.get("__interrupt__") or []
+            if interrupts and isinstance(interrupts[0], dict):
+                interrupt_payload = interrupts[0].get("value") or interrupts[0]
     steps = result.get("steps_log", []) if isinstance(result, dict) else []
     return {
         "thread_id": thread_id,
@@ -61,8 +66,13 @@ def chat(payload: ChatRequest, user=Depends(get_current_user)):
 def resume(payload: ResumeRequest, user=Depends(get_current_user)):
     result = _resume_graph(user.id, payload.thread_id, payload.value)
     interrupt_payload = None
-    if isinstance(result, dict) and "ask" in result:
-        interrupt_payload = result["ask"]
+    if isinstance(result, dict):
+        if "ask" in result:
+            interrupt_payload = result["ask"]
+        elif "__interrupt__" in result:
+            interrupts = result.get("__interrupt__") or []
+            if interrupts and isinstance(interrupts[0], dict):
+                interrupt_payload = interrupts[0].get("value") or interrupts[0]
     steps = result.get("steps_log", []) if isinstance(result, dict) else []
     return {
         "thread_id": payload.thread_id,

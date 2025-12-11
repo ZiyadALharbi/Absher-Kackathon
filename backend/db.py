@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from sqlmodel import SQLModel, Session, create_engine
 
-# SQLite for hackathon demo; swap to file path if persistence is needed
-DATABASE_URL = "sqlite:///./absher.db"
+# SQLite for hackathon demo; use tmp path to avoid repo permission issues
+DATABASE_URL = "sqlite:////tmp/absher.db"
 
 engine = create_engine(
     DATABASE_URL,

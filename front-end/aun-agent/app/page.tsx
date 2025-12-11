@@ -2,7 +2,59 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type ChatMessage = { role: "assistant" | "user"; content: string };
+type ViolationOption = {
+  violation_number: string | null;
+  city?: string;
+  amount?: number;
+  status?: string;
+  description?: string;
+};
+
+type ChatMessage =
+  | { role: "assistant" | "user"; type?: "text"; content: string }
+  | {
+      role: "assistant";
+      type: "options";
+      prompt: string;
+      scenario: string;
+      options: any[];
+    }
+  | {
+      role: "assistant";
+      type: "form";
+      title: string;
+      scenario: string;
+      fields: Array<{
+        key: string;
+        label: string;
+        type: "text" | "date" | "select";
+        options?: string[];
+      }>;
+    }
+  | {
+      role: "assistant";
+      type: "validation";
+      content: string;
+      scenario?: string;
+    }
+  | {
+      role: "assistant";
+      type: "payment";
+      fee: number;
+      context?: any;
+      label?: string;
+    }
+  | {
+      role: "assistant";
+      type: "add_balance";
+      needed: number;
+      context?: any;
+    }
+  | {
+      role: "assistant";
+      type: "summary";
+      content: string;
+    };
 type Interrupt = {
   ask?: string;
   field?: string;
@@ -22,6 +74,30 @@ const staticServices = [
 ];
 
 const suggestionChips = ["📄 الوثائق", "🚗 المركبات", "👨‍👩‍👧‍👦 العائلة"];
+
+const demoViolations: ViolationOption[] = [
+  {
+    violation_number: "V-1001",
+    city: "الرياض",
+    amount: 300,
+    status: "unpaid",
+    description: "تجاوز السرعة المحددة على الطريق الدائري الشرقي.",
+  },
+  {
+    violation_number: "V-1002",
+    city: "جدة",
+    amount: 150,
+    status: "unpaid",
+    description: "الوقوف في مكان غير مسموح.",
+  },
+  {
+    violation_number: "V-1003",
+    city: "مكة",
+    amount: 200,
+    status: "paid",
+    description: "عدم ربط حزام الأمان.",
+  },
+];
 
 const apiHeaders = (token?: string) => {
   const headers: Record<string, string> = {
@@ -72,6 +148,7 @@ export default function Page() {
   const [pending, setPending] = useState(false);
   const [input, setInput] = useState("");
   const [chatError, setChatError] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number>(200);
 
   // Restore session if token exists
   useEffect(() => {
@@ -151,6 +228,15 @@ export default function Page() {
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || pending) return;
+    // Append user message
+    appendMessage({ role: "user", content: text.trim(), type: "text" });
+    // Handle frontend-only scenarios
+    const scenario = detectLocalIntent(text.trim());
+    if (scenario) {
+      startScenario(scenario);
+      setInput("");
+      return;
+    }
     if (!effectiveToken) {
       setChatError("الرجاء تسجيل الدخول قبل بدء المحادثة.");
       return;
@@ -162,7 +248,7 @@ export default function Page() {
         message: text.trim(),
         thread_id: threadId,
       });
-      applyResponse(resp, text.trim());
+      applyResponse(resp);
       setInput("");
     } catch (err: any) {
       setChatError("فشل إرسال الرسالة. حاول مجدداً.");
@@ -204,6 +290,273 @@ export default function Page() {
     setThreadId(null);
     setChatOpen(false);
     setView("login");
+  };
+
+  const appendMessage = (msg: ChatMessage) => {
+    setMessages((prev) => [...prev, msg]);
+  };
+
+  const detectLocalIntent = (text: string): string | null => {
+    const lower = text.toLowerCase();
+    const hasViolation =
+      lower.includes("مخالفة") ||
+      lower.includes("مخالفاتي") ||
+      lower.includes("مخالفات") ||
+      lower.includes("violation");
+    const pay =
+      lower.includes("سداد") ||
+      lower.includes("اسدد") ||
+      lower.includes("ادفع") ||
+      lower.includes("pay");
+    const show =
+      lower.includes("اعرض") ||
+      lower.includes("عرض") ||
+      lower.includes("استعلام") ||
+      lower.includes("show");
+    const extension = lower.includes("تمديد") || lower.includes("مهلة");
+    const objection = lower.includes("اعتراض") || lower.includes("اعترض");
+    const license = lower.includes("رخصة") || lower.includes("الرخصة");
+    const idRenew = lower.includes("هوية") && lower.includes("تجديد");
+    const idReplace =
+      /بدل\s*(?:فاقد|فقد|تالف|تلِف|مفقود)/.test(lower) ||
+      lower.includes("بدل فاقد") ||
+      lower.includes("بدل تالف") ||
+      lower.includes("فاقد الهوية") ||
+      lower.includes("فقد الهوية");
+    const idFamily =
+      lower.includes("لأحد أفراد") || lower.includes("لأفراد الأسرة");
+    if (hasViolation && pay) return "violation_pay";
+    if (hasViolation && show) return "violation_show";
+    if (hasViolation && extension) return "violation_extension";
+    if (hasViolation && objection) return "violation_objection";
+    if (license) return "license_renewal";
+    if (idRenew) return "id_renewal";
+    if (idReplace) return "id_replacement";
+    if (idFamily) return "id_family_issue";
+    return null;
+  };
+
+  const startViolationSelect = (
+    scenario: string,
+    filter: (v: ViolationOption) => boolean
+  ) => {
+    const options = demoViolations.filter(filter);
+    appendMessage({
+      role: "assistant",
+      type: "options",
+      prompt:
+        scenario === "violation_pay"
+          ? "اختر مخالفة لسدادها"
+          : "اختر مخالفة لعرض التفاصيل",
+      scenario,
+      options: options.length
+        ? options
+        : [{ violation_number: null, description: "لا توجد مخالفات" }],
+    });
+  };
+
+  const handlePaymentFlow = (fee: number, context: any) => {
+    if (walletBalance < fee) {
+      appendMessage({
+        role: "assistant",
+        type: "add_balance",
+        needed: fee - walletBalance,
+        context,
+      });
+    } else {
+      setWalletBalance((b) => b - fee);
+      appendMessage({
+        role: "assistant",
+        type: "summary",
+        content: `تم الدفع بنجاح. المتبقي في المحفظة ${
+          walletBalance - fee
+        } ريال.`,
+      });
+    }
+  };
+
+  const handleOptionSelect = (scenario: string, option: any) => {
+    switch (scenario) {
+      case "violation_pay": {
+        const fee = option.amount || 0;
+        appendMessage({
+          role: "assistant",
+          type: "payment",
+          fee,
+          context: { violation: option, scenario },
+          label: `سداد المخالفة ${option.violation_number}`,
+        });
+        break;
+      }
+      case "violation_show": {
+        appendMessage({
+          role: "assistant",
+          type: "summary",
+          content: `تفاصيل المخالفة ${option.violation_number}: المدينة ${
+            option.city ?? "-"
+          }، المبلغ ${option.amount ?? 0}، الحالة ${option.status ?? "-"}. ${
+            option.description ?? ""
+          }`,
+        });
+        if (option.status === "unpaid") {
+          appendMessage({
+            role: "assistant",
+            type: "payment",
+            fee: option.amount || 0,
+            context: { violation: option, scenario: "violation_pay" },
+            label: `سداد المخالفة ${option.violation_number}`,
+          });
+        }
+        break;
+      }
+      case "violation_extension": {
+        appendMessage({
+          role: "assistant",
+          type: "summary",
+          content: `تم قبول طلب تمديد مهلة المخالفة ${option.violation_number}.`,
+        });
+        break;
+      }
+      case "violation_objection": {
+        const reasons = ["الصورة غير واضحة", "المخالفة مسددة", "سبب آخر"];
+        appendMessage({
+          role: "assistant",
+          type: "options",
+          prompt: `اختر سبب الاعتراض على المخالفة ${option.violation_number}`,
+          scenario: "violation_objection_reason",
+          options: reasons,
+        });
+        break;
+      }
+      case "violation_objection_reason": {
+        appendMessage({
+          role: "assistant",
+          type: "summary",
+          content: `تم تقديم الاعتراض. السبب: ${option}`,
+        });
+        break;
+      }
+      case "license_renewal": {
+        const fee = option.fee || 0;
+        appendMessage({
+          role: "assistant",
+          type: "payment",
+          fee,
+          context: { scenario, option },
+          label: `تجديد الرخصة لمدة ${option.label}`,
+        });
+        break;
+      }
+      case "id_renewal":
+      case "id_replacement":
+      case "id_family_issue": {
+        appendMessage({
+          role: "assistant",
+          type: "payment",
+          fee: 100,
+          context: { scenario },
+          label: "رسوم الخدمة 100 ريال",
+        });
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
+  const handleAddBalance = (amount: number, context: any) => {
+    setWalletBalance((b) => b + amount);
+    appendMessage({
+      role: "assistant",
+      type: "summary",
+      content: `تم شحن رصيدك. الرصيد الحالي ${walletBalance + amount} ريال.`,
+    });
+    if (context?.violation || context?.scenario) {
+      appendMessage({
+        role: "assistant",
+        type: "payment",
+        fee: context?.violation?.amount || context?.fee || 0,
+        context,
+        label: context?.label || "إتمام الدفع",
+      });
+    }
+  };
+
+  const handlePay = (fee: number, context: any) => {
+    handlePaymentFlow(fee, context);
+  };
+
+  const startScenario = (scenario: string) => {
+    switch (scenario) {
+      case "violation_pay":
+        startViolationSelect(scenario, (v) => v.status === "unpaid");
+        break;
+      case "violation_show":
+        startViolationSelect(scenario, () => true);
+        break;
+      case "violation_extension":
+        startViolationSelect(scenario, (v) => v.status === "unpaid");
+        break;
+      case "violation_objection":
+        startViolationSelect(scenario, () => true);
+        break;
+      case "license_renewal": {
+        const durations = [
+          { label: "سنتين", fee: 75 },
+          { label: "5 سنوات", fee: 200 },
+          { label: "10 سنوات", fee: 400 },
+        ];
+        appendMessage({
+          role: "assistant",
+          type: "options",
+          prompt: "اختر مدة تجديد الرخصة",
+          scenario,
+          options: durations,
+        });
+        break;
+      }
+      case "id_renewal":
+        appendMessage({
+          role: "assistant",
+          type: "summary",
+          content: "التحقق: متاح للتجديد.",
+        });
+        handleOptionSelect(scenario, {});
+        break;
+      case "id_replacement":
+        appendMessage({
+          role: "assistant",
+          type: "form",
+          title: "بيانات البلاغ",
+          scenario: "id_replacement_form",
+          fields: [
+            { key: "loss_date", label: "تاريخ الفقد/التلف", type: "date" },
+            {
+              key: "country",
+              label: "الدولة",
+              type: "select",
+              options: ["السعودية", "دولة أخرى"],
+            },
+            {
+              key: "city",
+              label: "المدينة",
+              type: "select",
+              options: ["الرياض", "جدة", "مكة", "الدمام"],
+            },
+          ],
+        });
+        break;
+      case "id_family_issue":
+        appendMessage({
+          role: "assistant",
+          type: "summary",
+          content: "التحقق: البيانات جاهزة.",
+        });
+        handleOptionSelect(scenario, {});
+        break;
+      default:
+        break;
+    }
   };
 
   const stepChips = useMemo(() => {
@@ -284,6 +637,124 @@ export default function Page() {
   };
 
   const MessageBubble = ({ msg }: { msg: ChatMessage }) => {
+    // Options card
+    if (msg.type === "options") {
+      return (
+        <div className="flex gap-3">
+          <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-sm">🤖</span>
+          </div>
+          <div className="flex-1">
+            <div className="bg-white rounded-2xl px-5 py-4 shadow-sm border border-gray-100">
+              <p className="text-gray-800 font-semibold mb-3">{msg.prompt}</p>
+              <div className="space-y-2">
+                {msg.options.map((o, idx) => (
+                  <button
+                    key={idx}
+                    className="w-full text-right px-4 py-3 rounded-xl border border-gray-200 hover:border-green-500 transition flex flex-col"
+                    onClick={() => handleOptionSelect(msg.scenario, o)}
+                  >
+                    {typeof o === "object" ? (
+                      <>
+                        {"violation_number" in o && (
+                          <span className="font-semibold text-emerald-700">
+                            مخالفة رقم: {o.violation_number ?? "غير متاحة"}
+                          </span>
+                        )}
+                        {"city" in o && (
+                          <span className="text-sm text-gray-600">
+                            المدينة: {o.city ?? "-"} | المبلغ: {o.amount ?? 0} |
+                            الحالة: {o.status ?? "-"}
+                          </span>
+                        )}
+                        {"description" in o && (
+                          <span className="text-xs text-gray-500 mt-1 line-clamp-2">
+                            {o.description}
+                          </span>
+                        )}
+                        {"label" in o && (
+                          <span className="font-semibold text-emerald-700">
+                            {o.label} - الرسوم {o.fee ?? 0} ريال
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-sm text-gray-700">{String(o)}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Payment card
+    if (msg.type === "payment") {
+      return (
+        <div className="flex gap-3">
+          <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-sm">🤖</span>
+          </div>
+          <div className="flex-1">
+            <div className="bg-white rounded-2xl px-5 py-4 shadow-sm border border-emerald-200">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-gray-800 font-semibold">
+                  {msg.label ?? "بطاقة الدفع"}
+                </p>
+                <span className="text-emerald-700 font-bold">
+                  {msg.fee} ريال
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                الرصيد الحالي: {walletBalance} ريال.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-xl shadow hover:shadow-md transition"
+                  onClick={() => handlePay(msg.fee, msg.context)}
+                >
+                  ادفع الآن
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Add balance card
+    if (msg.type === "add_balance") {
+      const amounts = [100, 200, 500];
+      return (
+        <div className="flex gap-3">
+          <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-sm">🤖</span>
+          </div>
+          <div className="flex-1">
+            <div className="bg-white rounded-2xl px-5 py-4 shadow-sm border border-amber-200">
+              <p className="text-gray-800 font-semibold mb-2">
+                الرصيد غير كافٍ. تحتاج إلى {msg.needed} ريال إضافية.
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {amounts.map((amt) => (
+                  <button
+                    key={amt}
+                    className="px-4 py-2 rounded-xl border border-gray-200 hover:border-green-500"
+                    onClick={() => handleAddBalance(amt, msg.context)}
+                  >
+                    اشحن {amt} ريال
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Summary / text fallback
     const isAssistant = msg.role === "assistant";
     return (
       <div className={`flex gap-3 ${isAssistant ? "" : "justify-end"}`}>
@@ -299,7 +770,7 @@ export default function Page() {
               : "bg-green-600 text-white rounded-tl-none"
           }`}
         >
-          <p className="leading-relaxed text-sm">{msg.content}</p>
+          <p className="leading-relaxed text-sm">{(msg as any).content}</p>
         </div>
         {!isAssistant && (
           <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">

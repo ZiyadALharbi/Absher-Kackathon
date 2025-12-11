@@ -148,8 +148,7 @@ def auto_fill_system_fields(collected: Dict[str, Any], req: Dict[str, Any], user
             "birth_date": profile.birth_date.isoformat() if profile and profile.birth_date else None,
             "nationality": profile.nationality if profile else None,
             "wallet_balance": wallet.balance,
-            "violation_number": unpaid_viols[0].violation_number if unpaid_viols else None,
-            "violation_id": unpaid_viols[0].id if unpaid_viols else None,
+            # Do NOT auto-fill violation_number/violation_id; let the user choose.
             "vehicle_plate": vehicles[0].plate if vehicles else None,
             "accident_number": accidents[0].accident_number if accidents else None,
         }
@@ -175,11 +174,20 @@ def validate_with_tools(user_id: Optional[int], req: Dict[str, Any], collected: 
     requires_payment = req.get("requires_payment", False) or bool(payment_info)
 
     fee = 0
+    service_code = req.get("code") or req.get("name")
     if payment_info:
         if "fee" in payment_info:
             fee = int(payment_info["fee"])
         elif "fee_by_duration" in payment_info and "renewal_duration" in collected:
             fee = int(payment_info["fee_by_duration"].get(str(collected["renewal_duration"]), 0))
+    # Special-case: violation payment uses the violation amount
+    if service_code == "traffic_violation_payment":
+        vnum = collected.get("violation_number")
+        if vnum:
+            with Session(engine) as session:
+                viol = get_violation_by_number(session, user_id, vnum)
+                if viol:
+                    fee = int(viol.amount or 0)
 
     # Wallet check
     if requires_payment and fee > 0:
