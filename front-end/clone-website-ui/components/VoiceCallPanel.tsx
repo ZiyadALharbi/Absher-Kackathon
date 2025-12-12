@@ -60,12 +60,26 @@ export default function VoiceCallPanel({
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const lastSpeakTimeRef = useRef<number>(Date.now());
+  const greetingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const greetingStartedRef = useRef<boolean>(false); // Persistent ref to track greeting across re-renders
 
   // Initialize greeting when component mounts
   useEffect(() => {
     console.log('═══════════════════════════════════════════');
     console.log('🎬 [VoiceCall] Component mounted - Starting initialization');
     console.log('═══════════════════════════════════════════');
+    
+    // CRITICAL: Check if greeting already started (prevents double call in React Strict Mode)
+    if (greetingStartedRef.current) {
+      console.warn('⚠️ [VoiceCall] Greeting already started - skipping duplicate mount');
+      return;
+    }
+    
+    // Guard: Stop any existing audio FIRST to prevent double playback
+    stopSpeaking();
+    
+    // Mark greeting as started IMMEDIATELY to prevent double calls
+    greetingStartedRef.current = true;
     
     // Play phone ring tone
     const ringTone = new Audio();
@@ -75,9 +89,18 @@ export default function VoiceCallPanel({
     
     // Simulate connecting state (2 seconds)
     console.log('📞 [VoiceCall] Simulating phone connection...');
-    setTimeout(() => {
+    greetingTimeoutRef.current = setTimeout(() => {
+      // Double check guard (extra safety)
+      if (!greetingStartedRef.current) {
+        console.warn('⚠️ [VoiceCall] Greeting flag reset - skipping');
+        return;
+      }
+      
       setIsConnecting(false);
       ringTone.pause();
+      
+      // Stop any audio again before starting new one
+      stopSpeaking();
       
       const greeting = 'السلام عليكم، أنا عون، مساعدك الذكي للخدمات الحكومية. كيف أقدر أساعدك اليوم؟';
       setMessages([
@@ -88,7 +111,7 @@ export default function VoiceCallPanel({
         },
       ]);
 
-      console.log('🔊 [VoiceCall] Starting greeting TTS');
+      console.log('🔊 [VoiceCall] Starting greeting TTS (SINGLE CALL)');
       console.log('📝 [VoiceCall] Greeting text:', greeting);
       
       // Speak greeting - wait until audio FULLY finishes before allowing user to speak
@@ -128,8 +151,20 @@ export default function VoiceCallPanel({
     return () => {
       console.log('🛑 [VoiceCall] Component unmounting - cleanup');
       clearInterval(durationInterval);
+      
+      // CRITICAL: Clear greeting timeout to prevent double calls
+      if (greetingTimeoutRef.current) {
+        console.log('🛑 [VoiceCall] Clearing greeting timeout');
+        clearTimeout(greetingTimeoutRef.current);
+        greetingTimeoutRef.current = null;
+      }
+      
       ringTone.pause();
+      stopSpeaking(); // Stop any playing audio
       cleanup();
+      
+      // Reset greeting flag on unmount (for re-opening)
+      greetingStartedRef.current = false;
     };
   }, []);
 

@@ -1,6 +1,7 @@
 // Global state for audio management
 let currentAudio: HTMLAudioElement | null = null;
 let isPlaying = false;
+let isProcessing = false; // Guard to prevent concurrent calls
 
 /**
  * Speak Arabic text using ElevenLabs TTS
@@ -16,6 +17,16 @@ export async function speakArabic(
   console.log('📝 [speakArabic] Text:', text.substring(0, 50) + '...');
   console.log('🎵 [speakArabic] Current isPlaying:', isPlaying);
   console.log('🎵 [speakArabic] Current audio:', currentAudio ? 'EXISTS' : 'null');
+  console.log('🔄 [speakArabic] isProcessing:', isProcessing);
+  
+  // CRITICAL: Prevent concurrent calls
+  if (isProcessing) {
+    console.warn('⚠️ [speakArabic] Already processing - REJECTING duplicate call!');
+    return Promise.resolve();
+  }
+  
+  isProcessing = true;
+  console.log('✅ [speakArabic] isProcessing set to TRUE - processing started');
   
   try {
     // Stop any currently playing audio FIRST
@@ -23,10 +34,10 @@ export async function speakArabic(
     stopSpeaking();
     console.log('✅ [speakArabic] stopSpeaking() done');
     
-    // Wait a bit to ensure previous audio is fully stopped
-    console.log('⏰ [speakArabic] Waiting 100ms...');
-    await new Promise(resolve => setTimeout(resolve, 100));
-    console.log('✅ [speakArabic] Wait done');
+    // Wait longer to ensure previous audio is FULLY stopped and cleaned up
+    console.log('⏰ [speakArabic] Waiting 300ms to ensure previous audio fully stopped...');
+    await new Promise(resolve => setTimeout(resolve, 300));
+    console.log('✅ [speakArabic] Wait done - previous audio should be fully stopped');
 
     // Call TTS API
     console.log('🌐 [speakArabic] Calling TTS API...');
@@ -66,7 +77,9 @@ export async function speakArabic(
     currentAudio.onended = () => {
       console.log('✅ [speakArabic] Audio ENDED event fired');
       isPlaying = false;
+      isProcessing = false; // Reset processing flag
       console.log('🎵 [speakArabic] isPlaying set to FALSE');
+      console.log('🔄 [speakArabic] isProcessing set to FALSE');
       URL.revokeObjectURL(audioUrl);
       currentAudio = null;
       console.log('🗑️ [speakArabic] Audio cleaned up');
@@ -86,6 +99,7 @@ export async function speakArabic(
     currentAudio.onerror = (error) => {
       console.error('❌ [speakArabic] Audio playback error:', error);
       isPlaying = false;
+      isProcessing = false; // Reset processing flag on error
       URL.revokeObjectURL(audioUrl);
       currentAudio = null;
       if (onEnd) {
@@ -112,6 +126,7 @@ export async function speakArabic(
   } catch (error) {
     console.error('❌ [speakArabic] Error:', error);
     isPlaying = false;
+    isProcessing = false; // Reset processing flag on error
     currentAudio = null;
     throw error;
   }
@@ -121,12 +136,20 @@ export async function speakArabic(
  * Stop the currently playing audio
  */
 export function stopSpeaking(): void {
+  console.log('🛑 [stopSpeaking] Called');
   if (currentAudio) {
+    console.log('🛑 [stopSpeaking] Stopping current audio...');
     currentAudio.pause();
     currentAudio.currentTime = 0;
+    currentAudio.onended = null; // Remove event listeners
+    currentAudio.onerror = null;
     currentAudio = null;
+    console.log('✅ [stopSpeaking] Audio stopped and cleaned up');
   }
   isPlaying = false;
+  isProcessing = false; // Reset processing flag
+  console.log('✅ [stopSpeaking] isPlaying set to FALSE');
+  console.log('✅ [stopSpeaking] isProcessing set to FALSE');
 }
 
 /**
