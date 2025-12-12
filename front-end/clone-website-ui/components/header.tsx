@@ -1,5 +1,8 @@
 import { ChevronLeft, BarChart3, Bell, Book, Users, UserCog } from "lucide-react"
 import Image from "next/image"
+import dynamic from 'next/dynamic'
+
+const WalletCard = dynamic(() => import('./WalletCard'), { ssr: false })
 
 export default function Header() {
   const navItems = [
@@ -13,7 +16,7 @@ export default function Header() {
 
   return (
     <header className="bg-white border-b border-[#E4E4E7]">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
         {/* Left: Absher Logo */}
         <div className="shrink-0">
           <Image
@@ -24,6 +27,11 @@ export default function Header() {
             className="h-12 w-auto"
             priority
           />
+        </div>
+        
+        {/* Wallet Card */}
+        <div className="shrink-0">
+          <WalletCard />
         </div>
 
         {/* Center Navigation */}

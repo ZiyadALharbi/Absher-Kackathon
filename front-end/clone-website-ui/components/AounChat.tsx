@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import violationsData from '@/data/violations.json';
+import BehavioralGreeting from './BehavioralGreeting';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -12,16 +13,53 @@ interface Message {
 }
 
 export default function AounChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'مرحباً، أنا عون، المساعد الذكي للخدمات الحكومية. كيف يمكنني مساعدتك اليوم؟',
-      timestamp: new Date(),
-    },
-  ]);
+  // 🎯 CASE 2: Behavioral Profile Demo
+  const [showBehavioralGreeting, setShowBehavioralGreeting] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 🧠 Check for behavioral profile on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userDataStr = localStorage.getItem('demo_user');
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        
+        // 🎯 CASE 2: Show behavioral greeting for returning Arabic users
+        if (
+          userData.behavioralProfile &&
+          !userData.isFirstLogin &&
+          userData.preferredLanguage === 'ar'
+        ) {
+          setUserProfile(userData);
+          setShowBehavioralGreeting(true);
+          // Don't show default greeting
+        } else {
+          // Show default greeting for other users
+          setMessages([
+            {
+              role: 'assistant',
+              content: 'مرحباً، أنا عون، المساعد الذكي للخدمات الحكومية. كيف يمكنني مساعدتك اليوم؟',
+              timestamp: new Date(),
+            },
+          ]);
+        }
+      } else {
+        // No user data - show default greeting
+        setMessages([
+          {
+            role: 'assistant',
+            content: 'مرحباً، أنا عون، المساعد الذكي للخدمات الحكومية. كيف يمكنني مساعدتك اليوم؟',
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -34,11 +72,30 @@ export default function AounChat() {
   const handleViolationPayment = (violationId: string) => {
     const violation = violationsData.find(v => v.id === violationId);
     if (violation) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `✅ تم سداد المخالفة ${violationId} بمبلغ ${violation.amount} ريال بنجاح.\n\nشكراً لك على استخدام خدمات أبشر.`,
-        timestamp: new Date(),
-      }]);
+      // Check wallet balance
+      const walletBalance = parseFloat(localStorage.getItem('wallet_balance') || '0');
+      const amount = parseFloat(violation.amount);
+      
+      if (walletBalance >= amount) {
+        // Deduct from wallet
+        const newBalance = walletBalance - amount;
+        localStorage.setItem('wallet_balance', newBalance.toString());
+        
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `✅ تم سداد المخالفة ${violationId} بمبلغ ${violation.amount} ريال من محفظتك بنجاح!\n\n💰 الرصيد المتبقي: ${newBalance.toFixed(2)} ريال\n\nشكراً لك على استخدام خدمات أبشر.\n\nيمكنك الاستمرار في استخدام الشات، وسيتم تحديث رصيد المحفظة تلقائياً.`,
+          timestamp: new Date(),
+        }]);
+        
+        // Trigger wallet update event without page reload
+        window.dispatchEvent(new Event('walletUpdate'));
+      } else {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `❌ عذراً، رصيد محفظتك غير كافٍ لسداد هذه المخالفة.\n\n💰 الرصيد الحالي: ${walletBalance.toFixed(2)} ريال\n💳 المطلوب: ${amount.toFixed(2)} ريال\n\nيرجى شحن محفظتك من الأعلى ثم المحاولة مرة أخرى.`,
+          timestamp: new Date(),
+        }]);
+      }
     }
   };
 
@@ -113,19 +170,45 @@ export default function AounChat() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F7F7F7] rounded-t-lg">
+        {/* 🎯 CASE 2: Behavioral Greeting (if applicable) */}
+        {showBehavioralGreeting && userProfile?.behavioralProfile && (
+          <BehavioralGreeting
+            profile={userProfile.behavioralProfile}
+            userName={userProfile.name}
+          />
+        )}
+        
         {messages.map((message, index) => (
           <div key={index}>
             <div
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex gap-2 items-end ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
+              {/* Aoun Avatar for assistant messages */}
+              {message.role === 'assistant' && (
+                <div className="flex-shrink-0 mb-1">
+                  <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#00663D] shadow-md">
+                    <img 
+                      src="/aoun.png" 
+                      alt="عون"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+              
               <div
                 className={`max-w-[80%] rounded-lg p-3 ${
                   message.role === 'user'
                     ? 'bg-[#00663D] text-white'
-                    : 'bg-white text-[#000000] border border-[#E4E4E7]'
+                    : 'bg-white text-[#000000] border border-[#E4E4E7] shadow-sm'
                 }`}
                 dir="rtl"
               >
+                {/* Name tag for assistant */}
+                {message.role === 'assistant' && (
+                  <p className="text-xs font-bold text-[#00663D] mb-1">عون</p>
+                )}
+                
                 <p className="text-sm whitespace-pre-line">{message.content}</p>
                 <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-white/80' : 'text-[#4A4A4A]'}`}>
                   {message.timestamp.toLocaleTimeString('ar-SA', {
@@ -134,6 +217,15 @@ export default function AounChat() {
                   })}
                 </p>
               </div>
+              
+              {/* User avatar (emoji) */}
+              {message.role === 'user' && (
+                <div className="flex-shrink-0 mb-1">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00663D] to-[#004A2C] flex items-center justify-center border-2 border-white shadow-md">
+                    <span className="text-white text-sm">👤</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Show violations if available */}
@@ -174,8 +266,18 @@ export default function AounChat() {
         ))}
 
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-white rounded-lg p-3 border border-[#E4E4E7]">
+          <div className="flex gap-2 items-end justify-start">
+            {/* Aoun Avatar while loading */}
+            <div className="flex-shrink-0 mb-1">
+              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#00663D] shadow-md animate-pulse">
+                <img 
+                  src="/aoun.png" 
+                  alt="عون"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-[#E4E4E7] shadow-sm">
               <Loader2 className="w-5 h-5 text-[#00663D] animate-spin" />
             </div>
           </div>

@@ -1,0 +1,538 @@
+{
+  "services": [
+    {
+      "name": "تجديد رخصة القيادة",
+      "category": "المرور",
+      "code": "renew_driving_license",
+      "requires_payment": true,
+      "payment": {
+        "wallet_type": "gov_wallet",
+        "requires_sufficient_balance": true,
+        "fee_by_duration": {
+          "2": 75,
+          "5": 200,
+          "10": 400
+        },
+        "notes": "رسوم تجريبية للديمو؛ السداد يتم من رصيد المحفظة الحكومية."
+      },
+      "requirements": [
+        {
+          "key": "traffic_fines_clear",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "outstanding_fines == 0",
+          "fail_message": "يجب سداد جميع المخالفات المرورية قبل التجديد."
+        },
+        {
+          "key": "medical_report_valid",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "medical_report.status == 'valid'",
+          "fail_message": "يجب توفر تقرير طبي ساري (إفادة). في الديمو نفترض أنه موجود."
+        },
+        {
+          "key": "renewal_window",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "remaining_validity_days < 365",
+          "fail_message": "يمكن التجديد عندما تقل الصلاحية المتبقية عن 365 يوم."
+        },
+        {
+          "key": "renewal_duration",
+          "type": "input",
+          "required": true,
+          "source": "user",
+          "field_type": "enum",
+          "options": [2, 5, 10],
+          "prompt": "اختر مدة التجديد (2 / 5 / 10 سنوات)."
+        }
+      ],
+      "steps": ["اختيار الرخصة", "العنوان", "المراجعة", "الدفع"],
+      "notes": [
+        "الخدمة تدعم رخصة القيادة الخصوصي والدراجة النارية (للديمو).",
+        "السداد عبر المحفظة الحكومية؛ يجب توفر رصيد يغطي الرسوم.",
+        "في حال تغيير الاسم الإنجليزي، يتم ذلك عبر تواصل وليس ضمن التجديد (متجاهَل في الديمو)."
+      ]
+    },
+    {
+      "name": "الاعتراض على المخالفات المرورية",
+      "category": "المرور",
+      "code": "traffic_violation_objection",
+      "requires_payment": false,
+      "requirements": [
+        {
+          "key": "violation_recent",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "violation_age_days <= 30",
+          "fail_message": "يمكن الاعتراض على المخالفة خلال 30 يوم من تاريخها فقط."
+        },
+        {
+          "key": "not_already_objected",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "objection_not_submitted_for_violation",
+          "fail_message": "تم تقديم اعتراض سابق على هذه المخالفة."
+        },
+        {
+          "key": "violation_selected",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "violation_belongs_to_user",
+          "fail_message": "اختر مخالفة مسجلة على هويتك من القائمة."
+        },
+        {
+          "key": "objection_reason",
+          "type": "input",
+          "required": true,
+          "source": "user",
+          "field_type": "text",
+          "prompt": "اكتب سبب الاعتراض (مختصر)."
+        }
+      ],
+      "steps": ["اختيار المخالفة", "إدخال السبب/التفاصيل", "تأكيد الإرسال"],
+      "notes": [
+        "يمكن الاعتراض خلال 30 يوم من تاريخ المخالفة فقط.",
+        "تكرار الاعتراضات المرفوضة قد يؤدي إلى إيقاف الخدمة مؤقتاً.",
+        "لا توجد رسوم على تقديم الاعتراض."
+      ]
+    },
+    {
+      "name": "عرض الاعتراضات السابقة على المخالفات",
+      "category": "المرور",
+      "code": "traffic_violation_objection_history",
+      "requires_payment": false,
+      "requirements": [],
+      "steps": ["عرض قائمة الاعتراضات", "مشاهدة التفاصيل/الحالة"],
+      "notes": [
+        "يوضح حالة الاعتراض (مرفوض، تحت المعالجة، مقبول) وتواريخ التقديم.",
+        "للاطلاع فقط، بدون إجراءات."
+      ]
+    },
+    {
+      "name": "الاستعلام الشامل عن المخالفات المرورية",
+      "category": "المرور",
+      "code": "traffic_violations_comprehensive_inquiry",
+      "requires_payment": false,
+      "requirements": [],
+      "steps": [
+        "عرض ملخص المخالفات",
+        "عرض المخالفات غير المسددة",
+        "عرض المخالفات المسددة",
+        "عرض تفاصيل مخالفة مختارة"
+      ],
+      "notes": [
+        "يعرض إجمالي المخالفات غير المسددة وعددها.",
+        "يدعم التبويب بين المخالفات غير المسددة والمسددة.",
+        "التفاصيل تشمل: رقم المخالفة، المدينة، التاريخ، قيمة المخالفة، الحالة (مسددة/غير مسددة)، ووصف المخالفة، والمركبة المرتبطة (رقم اللوحة/النوع/الموديل)."
+      ]
+    },
+    {
+      "name": "تمديد مهلة سداد المخالفات المرورية",
+      "category": "المرور",
+      "code": "traffic_violation_payment_extension",
+      "requires_payment": false,
+      "requirements": [
+        {
+          "key": "violation_unpaid",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "violation.status == 'unpaid'",
+          "fail_message": "التمديد متاح فقط للمخالفات غير المسددة."
+        },
+        {
+          "key": "not_already_extended",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "violation.extension_requested == false",
+          "fail_message": "تم تقديم طلب تمديد سابق لهذه المخالفة."
+        },
+        {
+          "key": "within_extension_window",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "violation_age_days <= 45",
+          "fail_message": "يجب طلب التمديد خلال 30 يوم من تسجيل المخالفة أو خلال 15 يوم بعد انتهاء مدة الاعتراض."
+        },
+        {
+          "key": "violation_selected",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "violation_belongs_to_user",
+          "fail_message": "اختر مخالفة مسجلة على هويتك من القائمة القابلة للتمديد."
+        }
+      ],
+      "steps": [
+        "اختيار المخالفة القابلة للتمديد",
+        "تأكيد طلب التمديد",
+        "عرض المخالفات التي تم تمديدها"
+      ],
+      "notes": [
+        "مدة التمديد 90 يوم لكل مخالفة يتم قبول طلبها.",
+        "يشترط أن تُطلب خلال مدة الاعتراض (30 يوم) أو خلال 15 يوم بعد انتهائها (<= 45 يوم من تسجيل المخالفة).",
+        "لا توجد رسوم على طلب التمديد."
+      ]
+    },
+    {
+      "name": "سداد مخالفة مرورية",
+      "category": "المرور",
+      "code": "traffic_violation_payment",
+      "requires_payment": true,
+      "payment": {
+        "wallet_type": "gov_wallet",
+        "requires_sufficient_balance": true,
+        "fee": 0,
+        "notes": "يتم احتساب مبلغ السداد من بيانات المخالفة."
+      },
+      "requirements": [
+        {
+          "key": "violation_number",
+          "type": "input",
+          "required": true,
+          "source": "user",
+          "field_type": "select",
+          "prompt": "اختر المخالفة المراد سدادها."
+        }
+      ],
+      "steps": ["اختيار المخالفة", "التحقق من الرسوم", "الدفع", "تأكيد السداد"],
+      "notes": [
+        "يتم عرض المخالفات غير المسددة فقط.",
+        "المبلغ المستحق يُحسب مباشرة من بيانات المخالفة."
+      ]
+    },
+    {
+      "name": "تقرير الحادث",
+      "category": "المرور",
+      "code": "traffic_accident_report",
+      "requires_payment": true,
+      "payment": {
+        "wallet_type": "gov_wallet",
+        "requires_sufficient_balance": true,
+        "fee": 28.75,
+        "notes": "رسوم تقرير الحادث (شامل الضريبة) تدفع عبر المحفظة الحكومية."
+      },
+      "requirements": [
+        {
+          "key": "vehicle_owned_by_user",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "vehicle.belongs_to_user == true",
+          "fail_message": "يجب اختيار مركبة مملوكة للمستخدم."
+        },
+        {
+          "key": "report_within_validity_window",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "days_since_incident <= 30",
+          "fail_message": "صلاحية شراء التقرير 30 يوم من تاريخ الحادث."
+        },
+        {
+          "key": "submitter_verified",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "user_identity_verified == true",
+          "fail_message": "يجب التحقق من الهوية قبل إصدار التقرير."
+        },
+        {
+          "key": "national_id_of_other_party",
+          "type": "input",
+          "required": false,
+          "source": "user",
+          "field_type": "text",
+          "prompt": "أدخل رقم هوية الأطراف الأخرى (إن وجد)."
+        }
+      ],
+      "steps": [
+        "طلب التقرير",
+        "التحقق (ملكية المركبة والتحقق من الهوية)",
+        "الدفع",
+        "استعراض/تنزيل التقرير",
+        "عرض التقارير السابقة"
+      ],
+      "notes": [
+        "البيانات المعروضة في التقرير: معلومات الحادث، معلومات مركبة الطرف الأول، معلومات رقم الهوية للأطراف الأخرى (إن وجد).",
+        "صلاحية عرض/شراء التقرير 30 يوم من تاريخ الحادث.",
+        "في حال نقص بيانات التقرير، يرجى التواصل مع الإدارة العامة للمرور.",
+        "يدعم التحقق من تقرير سابق بالرقم المرجعي ورقم هوية مُصدر التقرير."
+      ]
+    },
+    {
+      "name": "الاعتراض أو التنازل عن حادث",
+      "category": "المرور",
+      "code": "traffic_accident_objection_or_waiver",
+      "requires_payment": false,
+      "requirements": [
+        {
+          "key": "accident_number",
+          "type": "input",
+          "required": true,
+          "source": "user",
+          "field_type": "text",
+          "prompt": "أدخل رقم الحادث (10 أرقام)."
+        },
+        {
+          "key": "accident_report_exists",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "accident_report_found == true",
+          "fail_message": "يجب إدخال رقم حادث صالح مرسل من المرور."
+        },
+        {
+          "key": "objection_window_valid",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "days_since_accident_report <= 10",
+          "fail_message": "خيار الاعتراض متاح لمدة 10 أيام فقط من تاريخ تقرير الحادث."
+        },
+        {
+          "key": "vehicle_owned_by_user",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "vehicle.belongs_to_user == true",
+          "fail_message": "يمكن رفع الطلب من خلال حساب مالك المركبة فقط."
+        },
+        {
+          "key": "guardian_allowed_for_minor_driver",
+          "type": "check",
+          "required": false,
+          "source": "system",
+          "rule": "driver_age < 17 -> guardian_can_submit == true",
+          "fail_message": "إذا كان السائق أقل من 17 سنة يجب أن يقدم ولي الأمر الاعتراض."
+        }
+      ],
+      "steps": [
+        "إدخال رقم الحادث",
+        "معلومات الحادث (عرض/تأكيد)",
+        "المراجعة وتأكيد الطلب"
+      ],
+      "notes": [
+        "بعد إرسال طلب الاعتراض يمكن تصحيح الطلب المرسل للمراجعة حتى 3 مرات فقط.",
+        "يجب أن تكون وضعية المركبة صالحة عند رفع الطلب.",
+        "إذا كان السائق أقل من 17 سنة يمكن لولي الأمر تقديم الاعتراض.",
+        "الخدمة تدعم الاعتراض أو التنازل عن حادث مسجل من المرور أو نجم."
+      ]
+    },
+    {
+      "name": "إصدار هوية وطنية لفرد أسرة",
+      "category": "الأحوال المدنية",
+      "code": "national_id_issue_family_member",
+      "requires_payment": false,
+      "requirements": [
+        {
+          "key": "family_member_age_range",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "6 <= member_age <= 19",
+          "fail_message": "يجب أن يكون عمر فرد الأسرة بين 6 و 19 سنة."
+        },
+        {
+          "key": "no_existing_national_id",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "member_has_national_id == false",
+          "fail_message": "لا يمكن إصدار هوية جديدة لمن يملك هوية وطنية."
+        },
+        {
+          "key": "photo_uploaded",
+          "type": "check",
+          "required": true,
+          "source": "user",
+          "rule": "photo_uploaded == true",
+          "fail_message": "يجب إرفاق صورة مطابقة للاشتراطات."
+        },
+        {
+          "key": "fines_cleared",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "outstanding_fines == 0",
+          "fail_message": "يجب سداد الغرامات المالية المسجلة."
+        },
+        {
+          "key": "national_address_exists",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "national_address_present == true",
+          "fail_message": "يجب توفر عنوان وطني ضمن نطاق البريد السعودي."
+        }
+      ],
+      "steps": ["رفع الصورة", "اختيار العنوان للتوصيل", "المراجعة والتأكيد"],
+      "notes": [
+        "يتطلب حجز موعد لتسجيل السمات الحيوية لإصدار الهوية الجديدة.",
+        "التوصيل يستغرق 10 أيام عمل من تاريخ تقديم الطلب."
+      ]
+    },
+    {
+      "name": "تجديد الهوية الوطنية",
+      "category": "الأحوال المدنية",
+      "code": "national_id_renewal",
+      "requires_payment": true,
+      "payment": {
+        "wallet_type": "gov_wallet",
+        "requires_sufficient_balance": true,
+        "fee": 100,
+        "notes": "رسوم تجديد الهوية (تجريبية للديمو) عبر المحفظة الحكومية."
+      },
+      "requirements": [
+        {
+          "key": "expiry_window",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "days_to_expiry <= 180",
+          "fail_message": "يجب أن يتبقى على انتهاء الهوية 180 يوماً أو أقل."
+        },
+        {
+          "key": "photo_uploaded",
+          "type": "check",
+          "required": true,
+          "source": "user",
+          "rule": "photo_uploaded == true",
+          "fail_message": "يجب إرفاق صورة مطابقة للاشتراطات."
+        },
+        {
+          "key": "fines_cleared",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "outstanding_fines == 0",
+          "fail_message": "يجب سداد الغرامات المالية المسجلة."
+        },
+        {
+          "key": "national_address_exists",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "national_address_present == true",
+          "fail_message": "يجب توفر عنوان وطني ضمن نطاق البريد السعودي."
+        }
+      ],
+      "steps": ["رفع الصورة", "اختيار العنوان للتوصيل", "مراجعة الطلب والدفع"],
+      "notes": [
+        "التوصيل يستغرق 10 أيام عمل من تاريخ تقديم الطلب.",
+        "يجب أن يكون تبقي 180 يوم أو أقل على انتهاء الهوية لبدء التجديد."
+      ]
+    },
+    {
+      "name": "طلب هوية بدل مفقود",
+      "category": "الأحوال المدنية",
+      "code": "national_id_replacement_lost",
+      "requires_payment": true,
+      "payment": {
+        "wallet_type": "gov_wallet",
+        "requires_sufficient_balance": true,
+        "fee": 100,
+        "notes": "رسوم إصدار بدل مفقود (تجريبية للديمو) عبر المحفظة الحكومية."
+      },
+      "requirements": [
+        {
+          "key": "report_loss",
+          "type": "input",
+          "required": true,
+          "source": "user",
+          "field_type": "date",
+          "prompt": "أدخل تاريخ الفقدان."
+        },
+        {
+          "key": "loss_country",
+          "type": "input",
+          "required": true,
+          "source": "user",
+          "field_type": "select",
+          "prompt": "اختر دولة الفقدان."
+        },
+        {
+          "key": "loss_city",
+          "type": "input",
+          "required": true,
+          "source": "user",
+          "field_type": "select",
+          "prompt": "اختر مدينة الفقدان."
+        },
+        {
+          "key": "photo_uploaded",
+          "type": "check",
+          "required": true,
+          "source": "user",
+          "rule": "photo_uploaded == true",
+          "fail_message": "يجب إرفاق صورة مطابقة للاشتراطات."
+        },
+        {
+          "key": "national_address_exists",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "national_address_present == true",
+          "fail_message": "يجب توفر عنوان وطني للتوصيل."
+        }
+      ],
+      "steps": [
+        "تقديم بلاغ",
+        "رفع الصورة الشخصية",
+        "اختيار العنوان",
+        "مراجعة الطلب والدفع"
+      ],
+      "notes": ["يتطلب التوصيل عنوان وطني؛ مدة التوصيل 10 أيام عمل تقريباً."]
+    },
+    {
+      "name": "طلب هوية بدل تالف",
+      "category": "الأحوال المدنية",
+      "code": "national_id_replacement_damaged",
+      "requires_payment": true,
+      "payment": {
+        "wallet_type": "gov_wallet",
+        "requires_sufficient_balance": true,
+        "fee": 100,
+        "notes": "رسوم إصدار بدل تالف (تجريبية للديمو) عبر المحفظة الحكومية."
+      },
+      "requirements": [
+        {
+          "key": "photo_uploaded",
+          "type": "check",
+          "required": true,
+          "source": "user",
+          "rule": "photo_uploaded == true",
+          "fail_message": "يجب إرفاق صورة مطابقة للاشتراطات."
+        },
+        {
+          "key": "national_address_exists",
+          "type": "check",
+          "required": true,
+          "source": "system",
+          "rule": "national_address_present == true",
+          "fail_message": "يجب توفر عنوان وطني للتوصيل."
+        }
+      ],
+      "steps": ["رفع الصورة الشخصية", "اختيار العنوان", "مراجعة الطلب والدفع"],
+      "notes": ["يتطلب التوصيل عنوان وطني؛ مدة التوصيل 10 أيام عمل تقريباً."]
+    },
+    {
+      "name": "عرض الطلبات - الهوية الوطنية",
+      "category": "الأحوال المدنية",
+      "code": "national_id_requests_view",
+      "requires_payment": false,
+      "requirements": [],
+      "steps": ["عرض الطلبات"],
+      "notes": ["يُظهر حالة الطلبات السابقة."]
+    }
+  ]
+}

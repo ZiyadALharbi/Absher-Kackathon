@@ -5,9 +5,14 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File;
 
-    if (!audioFile) {
+    console.log('📥 [Voice API] Received request');
+    console.log('📦 [Voice API] Audio file:', audioFile ? audioFile.name : 'null');
+    console.log('📦 [Voice API] Audio size:', audioFile ? audioFile.size : 0, 'bytes');
+
+    if (!audioFile || audioFile.size < 1000) {
+      console.error('❌ [Voice API] Audio file missing or too small');
       return NextResponse.json(
-        { error: 'Audio file is required' },
+        { error: 'Audio file is required and must be at least 1KB' },
         { status: 400 }
       );
     }
@@ -20,12 +25,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Convert webm to proper format for Whisper
+    console.log('🔄 [Voice API] Preparing audio for Whisper...');
+    
     // Create FormData for OpenAI Whisper
     const whisperFormData = new FormData();
-    whisperFormData.append('file', audioFile);
+    
+    // Create a new Blob with proper audio type
+    const audioBlob = new Blob([await audioFile.arrayBuffer()], { 
+      type: 'audio/webm' 
+    });
+    
+    whisperFormData.append('file', audioBlob, 'audio.webm');
     whisperFormData.append('model', 'whisper-1');
     whisperFormData.append('language', 'ar'); // Arabic
 
+    console.log('🌐 [Voice API] Calling OpenAI Whisper...');
+    
     // Call OpenAI Whisper API
     const response = await fetch(
       'https://api.openai.com/v1/audio/transcriptions',
@@ -38,9 +54,11 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    console.log('📡 [Voice API] Whisper response status:', response.status);
+    
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI Whisper error:', errorText);
+      console.error('❌ [Voice API] OpenAI Whisper error:', errorText);
       return NextResponse.json(
         { error: 'Failed to transcribe audio' },
         { status: response.status }
@@ -48,6 +66,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
+    console.log('✅ [Voice API] Transcription successful');
+    console.log('📝 [Voice API] Transcribed text:', data.text);
+    
     return NextResponse.json({
       text: data.text,
     });

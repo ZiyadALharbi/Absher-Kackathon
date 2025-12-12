@@ -55,10 +55,14 @@ export async function speakArabic(
     console.log('🎵 [speakArabic] Creating Audio element...');
     currentAudio = new Audio(audioUrl);
     currentAudio.volume = 1.0; // Full volume
+    
+    // Set crossOrigin to anonymous to avoid CORS issues
+    currentAudio.crossOrigin = 'anonymous';
+    
     isPlaying = true;
     console.log('✅ [speakArabic] Audio element created - isPlaying set to TRUE');
 
-    // Set up event listeners
+    // Set up event listeners BEFORE playing
     currentAudio.onended = () => {
       console.log('✅ [speakArabic] Audio ENDED event fired');
       isPlaying = false;
@@ -68,12 +72,12 @@ export async function speakArabic(
       console.log('🗑️ [speakArabic] Audio cleaned up');
       
       if (onEnd) {
-        console.log('📞 [speakArabic] Calling onEnd callback after 200ms...');
-        // Small delay before callback
+        console.log('📞 [speakArabic] Calling onEnd callback after 800ms...');
+        // Longer delay to ensure audio is FULLY finished and user heard everything
         setTimeout(() => {
-          console.log('✅ [speakArabic] onEnd callback executed');
+          console.log('✅ [speakArabic] onEnd callback executed - audio FULLY done');
           onEnd();
-        }, 200);
+        }, 800);
       } else {
         console.log('ℹ️ [speakArabic] No onEnd callback provided');
       }
@@ -89,10 +93,22 @@ export async function speakArabic(
       }
     };
 
-    // Play the audio
+    // Load and play the audio
+    console.log('📥 [speakArabic] Loading audio...');
+    currentAudio.load();
+    
     console.log('▶️ [speakArabic] Starting playback...');
-    await currentAudio.play();
-    console.log('✅ [speakArabic] Playback started successfully');
+    try {
+      await currentAudio.play();
+      console.log('✅ [speakArabic] Playback started successfully');
+    } catch (playError) {
+      console.error('❌ [speakArabic] Play failed:', playError);
+      // Try one more time with user interaction
+      console.log('🔄 [speakArabic] Retrying playback...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await currentAudio.play();
+      console.log('✅ [speakArabic] Playback started on retry');
+    }
   } catch (error) {
     console.error('❌ [speakArabic] Error:', error);
     isPlaying = false;

@@ -34,6 +34,7 @@ const AUDIO_CONSTRAINTS = {
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
+  sampleRate: 48000,
 };
 
 export default function VoiceCallPanel({
@@ -46,6 +47,8 @@ export default function VoiceCallPanel({
   const [error, setError] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [callDuration, setCallDuration] = useState(0);
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -64,47 +67,68 @@ export default function VoiceCallPanel({
     console.log('🎬 [VoiceCall] Component mounted - Starting initialization');
     console.log('═══════════════════════════════════════════');
     
-    const greeting = 'مرحباً، أنا عون، مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟';
-    setMessages([
-      {
-        role: 'assistant',
-        content: greeting,
-        timestamp: new Date(),
-      },
-    ]);
+    // Play phone ring tone
+    const ringTone = new Audio();
+    ringTone.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzeM0fPTgjMGHm7A7+OZUQ8MUKjj8bllHAU3kdfy0H4sBSh+zPLckUELEF247NygThELTKXh8sNtJAU3i9Ty1YU1BiBwwe/onlENDFGn4/K5ZRsEOJLY89F+KwUoffDy3JFADQ1dtu3bomwgBDSH0fPUgzQGIm/A7eSVUBEPUKjj8bdkGwQ4ktf00H8sBSh7yfLdkUILEF235N+iaw8FNQUA';
+    ringTone.volume = 0.3;
+    ringTone.play();
+    
+    // Simulate connecting state (2 seconds)
+    console.log('📞 [VoiceCall] Simulating phone connection...');
+    setTimeout(() => {
+      setIsConnecting(false);
+      ringTone.pause();
+      
+      const greeting = 'السلام عليكم، أنا عون، مساعدك الذكي للخدمات الحكومية. كيف أقدر أساعدك اليوم؟';
+      setMessages([
+        {
+          role: 'assistant',
+          content: greeting,
+          timestamp: new Date(),
+        },
+      ]);
 
-    console.log('🔊 [VoiceCall] Starting greeting TTS');
-    console.log('📝 [VoiceCall] Greeting text:', greeting);
-    
-    // Speak greeting - wait longer before starting recording
-    setIsSpeaking(true);
-    console.log('🎤 [VoiceCall] isSpeaking set to TRUE');
-    
-    speakArabic(greeting, () => {
-      console.log('✅ [VoiceCall] Greeting TTS finished');
-      setIsSpeaking(false);
-      console.log('🎤 [VoiceCall] isSpeaking set to FALSE');
+      console.log('🔊 [VoiceCall] Starting greeting TTS');
+      console.log('📝 [VoiceCall] Greeting text:', greeting);
       
-      // Wait 1 second after greeting ends before starting recording
-      console.log('⏰ [VoiceCall] Waiting 1000ms before starting recording...');
-      setTimeout(() => {
-        console.log('🎙️ [VoiceCall] Timeout done - calling startRecording()');
-        startRecording();
-      }, 1000);
-    }).catch((err) => {
-      console.error('❌ [VoiceCall] Greeting TTS failed:', err);
-      setIsSpeaking(false);
-      console.log('🎤 [VoiceCall] isSpeaking set to FALSE (after error)');
+      // Speak greeting - wait until audio FULLY finishes before allowing user to speak
+      setIsSpeaking(true);
+      console.log('🎤 [VoiceCall] isSpeaking set to TRUE');
       
-      // Still try to start recording after delay
-      setTimeout(() => {
-        console.log('🎙️ [VoiceCall] Starting recording after error...');
-        startRecording();
-      }, 1000);
-    });
+      speakArabic(greeting, () => {
+        console.log('✅ [VoiceCall] Greeting TTS finished');
+        
+        // Wait 1.5 seconds AFTER audio fully ends to ensure user hears everything
+        console.log('⏰ [VoiceCall] Waiting 1500ms to ensure audio fully finished...');
+        setTimeout(() => {
+          setIsSpeaking(false);
+          console.log('🎤 [VoiceCall] isSpeaking set to FALSE');
+          console.log('🎙️ [VoiceCall] NOW starting recording - your turn!');
+          startRecording();
+        }, 1500);
+      }).catch((err) => {
+        console.error('❌ [VoiceCall] Greeting TTS failed:', err);
+        setIsSpeaking(false);
+        console.log('🎤 [VoiceCall] isSpeaking set to FALSE (after error)');
+        
+        // Still try to start recording after delay
+        setTimeout(() => {
+          console.log('🎙️ [VoiceCall] Starting recording after error...');
+          startRecording();
+        }, 1500);
+      });
+    }, 2000);
+
+    // Call duration timer
+    const callStartTime = Date.now();
+    const durationInterval = setInterval(() => {
+      setCallDuration(Math.floor((Date.now() - callStartTime) / 1000));
+    }, 1000);
 
     return () => {
       console.log('🛑 [VoiceCall] Component unmounting - cleanup');
+      clearInterval(durationInterval);
+      ringTone.pause();
       cleanup();
     };
   }, []);
@@ -192,14 +216,14 @@ export default function VoiceCallPanel({
       stopSpeaking();
       console.log('✅ [Recording] stopSpeaking() done');
       
-      // Get user media with enhanced echo cancellation
+      // Get user media with MAXIMUM echo cancellation
       console.log('🎤 [Recording] Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 48000,
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+          sampleRate: { ideal: 48000 },
           channelCount: 1,
         },
       });
@@ -231,9 +255,14 @@ export default function VoiceCallPanel({
           type: 'audio/webm;codecs=opus',
         });
         
-        // Send to STT only if blob has data
-        if (audioBlob.size > 0) {
+        console.log('📦 [Recording] onstop - blob size:', audioBlob.size);
+        
+        // Send to STT only if blob has enough data (>1KB)
+        if (audioBlob.size > 1000) {
+          console.log('✅ [Recording] Blob valid - processing...');
           await processAudio(audioBlob);
+        } else {
+          console.log('⚠️ [Recording] Blob too small - ignoring');
         }
       };
 
@@ -273,44 +302,48 @@ export default function VoiceCallPanel({
 
   // Stop recording
   const stopRecording = useCallback(() => {
+    // Prevent infinite loops - check if already stopped
+    if (!mediaRecorderRef.current && !streamRef.current) {
+      return;
+    }
+    
     console.log('───────────────────────────────────────────');
     console.log('⏹️ [Recording] stopRecording() called');
-    console.log('📊 [Recording] Current isRecording:', isRecording);
     
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       console.log('🛑 [Recording] Stopping MediaRecorder...');
       mediaRecorderRef.current.stop();
       console.log('✅ [Recording] MediaRecorder stopped');
-    } else {
-      console.log('ℹ️ [Recording] MediaRecorder not recording or null');
     }
     
     if (streamRef.current) {
       console.log('🔇 [Recording] Stopping audio tracks...');
       streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
       console.log('✅ [Recording] Audio tracks stopped');
     }
     
     if (animationFrameRef.current) {
-      console.log('⏹️ [Recording] Canceling animation frame...');
       cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
     
     if (recordingTimerRef.current) {
-      console.log('⏹️ [Recording] Clearing recording timer...');
       clearTimeout(recordingTimerRef.current);
+      recordingTimerRef.current = null;
     }
     
     if (silenceTimerRef.current) {
-      console.log('⏹️ [Recording] Clearing silence timer...');
       clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
     }
 
+    mediaRecorderRef.current = null;
     setIsRecording(false);
     console.log('✅ [Recording] isRecording set to FALSE');
     setRecordingTime(0);
     setAudioLevel(0);
-  }, [isRecording]);
+  }, []); // No dependencies - prevent infinite loops
 
   // Process audio (STT → Chat → TTS)
   const processAudio = useCallback(async (audioBlob: Blob) => {
@@ -387,10 +420,13 @@ export default function VoiceCallPanel({
       // Step 3: Text-to-Speech
       console.log('🔊 [TTS] Step 3: Text-to-Speech');
       
-      // Make sure recording is stopped before speaking
+      // Make sure recording is FULLY stopped before speaking
       console.log('🛑 [TTS] Stopping any recording...');
       stopRecording();
-      console.log('✅ [TTS] Recording stopped');
+      
+      // Wait a moment to ensure recording is fully stopped
+      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('✅ [TTS] Recording fully stopped - waited 500ms');
       
       console.log('🎤 [TTS] Setting isSpeaking to TRUE');
       setIsSpeaking(true);
@@ -398,13 +434,13 @@ export default function VoiceCallPanel({
       
       await speakArabic(aiResponse, () => {
         console.log('✅ [TTS] Audio finished playing');
-        console.log('🎤 [TTS] Setting isSpeaking to FALSE');
-        setIsSpeaking(false);
         
-        // Wait longer after TTS ends before starting recording
-        console.log('⏰ [TTS] Waiting 1500ms before next recording...');
+        // Wait 1.5 seconds AFTER audio fully ends to ensure user hears everything
+        console.log('⏰ [TTS] Waiting 1500ms to ensure audio fully finished...');
         setTimeout(() => {
-          console.log('🎙️ [TTS] Timeout done - calling startRecording()');
+          console.log('🎤 [TTS] Setting isSpeaking to FALSE');
+          setIsSpeaking(false);
+          console.log('🎙️ [TTS] NOW starting recording - your turn!');
           startRecording();
         }, 1500);
       });
@@ -414,68 +450,208 @@ export default function VoiceCallPanel({
       setError('حدث خطأ في معالجة الصوت');
       setIsSpeaking(false);
       
-      // Retry recording after longer delay
+      // Retry recording after 3 second delay
+      console.log('⏰ [Error] Waiting 3000ms before retrying...');
       setTimeout(() => {
         if (!isSpeaking) {
+          console.log('🔄 [Error] Retrying - calling startRecording()');
+          setError(null);
           startRecording();
         }
-      }, 2000);
+      }, 3000);
     }
   }, [onSendMessage, startRecording, stopRecording, isSpeaking]);
 
+  // Format call duration
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" dir="rtl">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#00663D] to-[#004A2C] text-white p-6 rounded-t-2xl flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <Volume2 className="w-6 h-6" />
+    <div className="fixed inset-0 bg-gradient-to-b from-gray-900 to-black flex items-center justify-center z-50" dir="rtl">
+      {isConnecting ? (
+        // Connecting Screen (Phone Call Style)
+        <div className="flex flex-col items-center gap-6 text-white">
+          <div className="relative">
+            {/* Aoun Avatar while connecting */}
+            <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-[#00663D] shadow-2xl animate-pulse">
+              <img 
+                src="/aoun.png" 
+                alt="عون"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div>
-              <h2 className="text-xl font-bold">مكالمة صوتية مع عون</h2>
-              <p className="text-sm text-white/80">المساعد الذكي للخدمات الحكومية</p>
+            <div className="absolute inset-0 w-40 h-40 bg-[#00663D] rounded-full animate-ping opacity-20"></div>
+            <div className="absolute inset-0 w-40 h-40 bg-[#00663D] rounded-full animate-ping opacity-10" style={{ animationDelay: '0.5s' }}></div>
+          </div>
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-2">عون 🇸🇦</h2>
+            <p className="text-lg text-gray-300 animate-pulse">جاري الاتصال...</p>
+            <div className="flex gap-2 justify-center mt-4">
+              <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
             </div>
           </div>
-          <button
-            onClick={() => {
-              cleanup();
-              onClose();
-            }}
-            className="w-10 h-10 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
-          >
-            <PhoneOff className="w-5 h-5" />
-          </button>
         </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[75%] rounded-2xl p-4 ${
-                  message.role === 'user'
-                    ? 'bg-[#00663D] text-white'
-                    : 'bg-white text-gray-800 border-2 border-gray-200'
-                }`}
-              >
-                <p className="text-sm leading-relaxed">{message.content}</p>
-                <p
-                  className={`text-xs mt-2 ${
-                    message.role === 'user' ? 'text-white/70' : 'text-gray-500'
-                  }`}
-                >
-                  {message.timestamp.toLocaleTimeString('ar-SA', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+      ) : (
+        // Call Screen (Phone Call Style)
+        <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-3xl shadow-2xl w-full max-w-md flex flex-col" style={{ height: '90vh', maxHeight: '700px' }}>
+          {/* Header - Phone Call Style */}
+          <div className="bg-gradient-to-r from-[#00663D] to-[#004A2C] text-white p-6 rounded-t-3xl text-center relative overflow-hidden">
+            {/* Background pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full blur-3xl"></div>
+            </div>
+            
+            <div className="flex flex-col items-center gap-3 relative z-10">
+              {/* Small Aoun Avatar in Header */}
+              <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white/30 shadow-xl">
+                <img 
+                  src="/aoun.png" 
+                  alt="عون"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">عون</h2>
+                <p className="text-sm text-white/80 mt-1">🇸🇦 مساعدك الذكي للخدمات الحكومية</p>
+                <p className="text-lg font-mono mt-2 text-white/90 bg-white/10 rounded-full px-4 py-1 inline-block">
+                  ⏱️ {formatDuration(callDuration)}
                 </p>
               </div>
             </div>
-          ))}
+          </div>
+
+        {/* Call Status - Voice Only (No Chat Bubbles) */}
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center bg-gradient-to-b from-gray-700 to-gray-800">
+          {/* Voice Activity Indicator */}
+          <div className="flex flex-col items-center gap-8">
+            {/* Aoun Avatar - Animated */}
+            <div className="relative">
+              {/* Main Avatar Circle */}
+              <div className={`w-48 h-48 rounded-full overflow-hidden border-4 transition-all duration-300 shadow-2xl ${
+                isSpeaking 
+                  ? 'border-[#00663D] shadow-[#00663D]/50 scale-110 ring-4 ring-[#00663D]/30' 
+                  : isRecording
+                  ? 'border-red-500 shadow-red-500/50 animate-pulse ring-4 ring-red-500/30'
+                  : 'border-gray-500 shadow-gray-500/50'
+              }`}>
+                <img 
+                  src="/aoun.png" 
+                  alt="عون - المساعد الذكي"
+                  className={`w-full h-full object-cover transition-all duration-300 ${
+                    isSpeaking || isRecording ? 'scale-110' : 'scale-100'
+                  }`}
+                />
+              </div>
+              
+              {/* Ripple effect when speaking */}
+              {isSpeaking && (
+                <>
+                  <div className="absolute inset-0 w-48 h-48 bg-[#00663D] rounded-full animate-ping opacity-20"></div>
+                  <div className="absolute inset-0 w-48 h-48 bg-[#00663D] rounded-full animate-ping opacity-10" style={{ animationDelay: '0.5s' }}></div>
+                  {/* Sound waves indicator */}
+                  <div className="absolute -right-2 top-1/2 transform -translate-y-1/2">
+                    <Volume2 className="w-8 h-8 text-[#00663D] animate-pulse" />
+                  </div>
+                </>
+              )}
+              
+              {/* Ripple effect when recording (user speaking) */}
+              {isRecording && (
+                <>
+                  <div className="absolute inset-0 w-48 h-48 bg-red-500 rounded-full animate-ping opacity-20"></div>
+                  <div className="absolute inset-0 w-48 h-48 bg-red-500 rounded-full animate-ping opacity-10" style={{ animationDelay: '0.5s' }}></div>
+                  {/* Mic indicator */}
+                  <div className="absolute -right-2 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full p-2 shadow-lg">
+                    <Mic className="w-6 h-6 text-white" />
+                  </div>
+                </>
+              )}
+              
+              {/* Waiting state glow */}
+              {!isRecording && !isSpeaking && (
+                <div className="absolute inset-0 w-48 h-48 bg-white rounded-full animate-pulse opacity-5"></div>
+              )}
+            </div>
+            
+            {/* Status Text */}
+            <div className="text-center">
+              {isSpeaking && (
+                <p className="text-2xl font-bold text-white animate-pulse">عون يتحدث...</p>
+              )}
+              {isRecording && (
+                <div className="space-y-3">
+                  <p className="text-2xl font-bold text-white">أنت تتحدث...</p>
+                  <p className="text-lg text-gray-300 font-mono">
+                    {(recordingTime / 1000).toFixed(1)}s
+                  </p>
+                  {/* Audio Level Bars */}
+                  <div className="flex gap-1 justify-center items-end h-16">
+                    {[...Array(8)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-3 bg-red-500 rounded-full transition-all duration-100"
+                        style={{
+                          height: `${Math.max(10, Math.min(64, (audioLevel + Math.random() * 20) * (i + 1) / 4))}px`
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!isRecording && !isSpeaking && (
+                <p className="text-xl text-gray-400">في انتظار حديثك...</p>
+              )}
+            </div>
+            
+            {/* Last Message Display with Avatar */}
+            {messages.length > 0 && (
+              <div className="mt-8 max-w-md w-full px-4">
+                <div className={`flex gap-3 items-start ${
+                  messages[messages.length - 1].role === 'user' 
+                    ? 'flex-row-reverse' 
+                    : 'flex-row'
+                }`}>
+                  {/* Avatar */}
+                  {messages[messages.length - 1].role === 'assistant' && (
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 shadow-lg">
+                        <img 
+                          src="/aoun.png" 
+                          alt="عون"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {messages[messages.length - 1].role === 'user' && (
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00663D] to-[#004A2C] flex items-center justify-center border-2 border-white/30 shadow-lg">
+                        <span className="text-white text-lg">👤</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Message Bubble */}
+                  <div className={`rounded-2xl p-4 backdrop-blur-sm max-w-xs ${
+                    messages[messages.length - 1].role === 'user'
+                      ? 'bg-[#00663D]/80 text-white'
+                      : 'bg-white/10 text-white border border-white/20'
+                  }`}>
+                    <p className="text-sm leading-relaxed">
+                      {messages[messages.length - 1].content}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Error */}
@@ -485,55 +661,39 @@ export default function VoiceCallPanel({
           </div>
         )}
 
-        {/* Controls */}
-        <div className="p-6 bg-gray-50 rounded-b-2xl border-t border-gray-200">
-          <div className="flex flex-col items-center gap-4">
-            {/* Mic Button */}
+        {/* Controls - Phone Style */}
+        <div className="p-8 bg-gradient-to-b from-gray-800 to-gray-900 rounded-b-3xl">
+          <div className="flex justify-center items-center gap-8">
+            {/* Mute Button (Disabled for now) */}
             <button
-              onClick={isRecording ? stopRecording : startRecording}
-              disabled={isSpeaking}
-              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
-                isRecording
-                  ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                  : isSpeaking
-                  ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-[#00663D] hover:bg-[#004A2C] hover:scale-110'
-              } shadow-lg`}
+              disabled
+              className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center opacity-50 cursor-not-allowed"
             >
-              {isRecording ? (
-                <MicOff className="w-8 h-8 text-white" />
-              ) : (
-                <Mic className="w-8 h-8 text-white" />
-              )}
+              <MicOff className="w-7 h-7 text-gray-400" />
             </button>
 
-            {/* Status */}
-            <div className="text-center">
-              {isSpeaking && (
-                <p className="text-sm font-medium text-[#00663D]">جاري التحدث...</p>
-              )}
-              {isRecording && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-red-600">جاري التسجيل...</p>
-                  <p className="text-xs text-gray-500">
-                    {(recordingTime / 1000).toFixed(1)}s / {VAD_CONFIG.maxRecordingTime / 1000}s
-                  </p>
-                  {/* Audio Level Indicator */}
-                  <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#00663D] transition-all duration-100"
-                      style={{ width: `${Math.min(100, (audioLevel / 50) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-              {!isRecording && !isSpeaking && (
-                <p className="text-sm text-gray-500">اضغط على الميكروفون للتحدث</p>
-              )}
-            </div>
+            {/* End Call Button */}
+            <button
+              onClick={() => {
+                cleanup();
+                onClose();
+              }}
+              className="w-20 h-20 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center transition-all shadow-2xl hover:scale-110 active:scale-95"
+            >
+              <PhoneOff className="w-9 h-9 text-white" />
+            </button>
+
+            {/* Speaker Button (Disabled for now) */}
+            <button
+              disabled
+              className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center opacity-50 cursor-not-allowed"
+            >
+              <Volume2 className="w-7 h-7 text-gray-400" />
+            </button>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
