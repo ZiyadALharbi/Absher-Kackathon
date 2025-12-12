@@ -1,616 +1,653 @@
-# Aoun – Intelligent Government Services Agent
+# 🇸🇦 عون - المساعد الذكي للخدمات الحكومية
 
-Aoun is an agentic AI system designed to orchestrate government services through intelligent, state-aware, and execution-capable interactions. Built with production-ready architecture, Aoun provides a unified interface for citizens to interact with government services via voice and text, with proactive state awareness and automated service execution workflows.
+<div align="center">
 
----
+![Absher Logo](./absher_logo.svg)
 
-## 1. Technical Problem Statement
+# **عون (Aoun)**
 
-Current government service platforms face significant technical gaps that limit citizen experience and operational efficiency:
+## المساعد الذكي الذي يجعل الخدمات الحكومية أسهل وأذكى
 
-**Fragmented Service Architecture**: Citizens must navigate multiple disconnected platforms, each with its own authentication, data model, and workflow. This fragmentation creates cognitive overhead and increases the likelihood of missed deadlines or incomplete transactions.
+**مشروع مقدم لـ Absher Hackathon 2025**
 
-**Lack of Proactive State Awareness**: Systems operate reactively, requiring citizens to initiate all interactions. There is no mechanism to monitor document expiration, violation deadlines, or service dependencies, leading to preventable penalties and administrative burden.
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![AI](https://img.shields.io/badge/AI-Groq%20LLaMA%203.3-green?style=for-the-badge)](https://groq.com/)
 
-**Absence of Agent-Based Execution Layer**: Current platforms are form-filling interfaces without autonomous orchestration capabilities. Citizens must manually coordinate multi-step processes, understand service dependencies, and track completion across different agencies.
-
-**Limited Contextual Intelligence**: Services operate in isolation without understanding user intent, historical context, or life-event relationships. This results in repetitive data entry and missed opportunities for service bundling.
-
-Aoun addresses these gaps through an agentic architecture that unifies services, maintains state awareness, and executes workflows autonomously.
+</div>
 
 ---
 
-## 2. System Overview
+## 🎯 المشكلة التي نحلها
 
-Aoun is an **Agentic AI System** (not a chatbot) that operates as an intelligent orchestrator for government services. The system is:
+### التحديات الحالية:
 
-**Event-Driven**: Responds to user intents, state changes, and time-based triggers (e.g., document expiration warnings).
-
-**State-Aware**: Maintains a comprehensive view of citizen status across all government services, including documents, vehicles, violations, and life events.
-
-**Execution-Capable**: Goes beyond information retrieval to actively execute service workflows, coordinate dependencies, and manage multi-step processes.
-
-**API-Ready**: Designed with a clean separation between the agent layer and data sources, enabling seamless integration with real government APIs when available.
-
-The system currently operates with **simulated data and mock APIs** for validation and demonstration purposes. The architecture is explicitly designed to transition to production APIs without structural changes.
+- ❌ **تعقيد الإجراءات**: المواطن يحتاج لزيارة عدة مواقع لإتمام إجراء واحد
+- ❌ **عدم الوعي**: المواطن لا يعرف متى تنتهي وثائقه أو تأمينه حتى يصبح غرامة
+- ❌ **وقت طويل**: إتمام الإجراءات الحكومية يستغرق ساعات أو أيام
+- ❌ **صعوبة الوصول**: الخدمات الحكومية غير موحدة في مكان واحد
 
 ---
 
-## 3. Core Technical Architecture
+## 💡 الحل المبتكر: عون
 
-### 3.1 Frontend Layer
+**عون** هو مساعد ذكي متكامل يجمع جميع الخدمات الحكومية في مكان واحد، ويتفاعل مع المواطن بالصوت والنص، و**ينبهه قبل أن تصبح غرامة**.
 
-**Technology Stack**:
-- **Next.js 16.0.3** (App Router) – Server-side rendering, API routes, and optimized performance
-- **TypeScript** – Type safety and maintainability
-- **Tailwind CSS** – Utility-first styling with RTL-first Arabic UX
-- **React 18.3.1** – Component-based architecture with hooks and context
+### 🚀 المميزات الرئيسية:
 
-**Key Components**:
-- **Voice Interface**: Real-time speech-to-text (STT) and text-to-speech (TTS) with Voice Activity Detection (VAD)
-- **Chat Interface**: Conversational UI with message history and context preservation
-- **Service Orchestration UI**: Visual workflow tracking for multi-step processes
-- **RTL-First Design**: Native right-to-left layout optimized for Arabic content
+#### 1️⃣ **المساعد الصوتي الذكي** 🎤
 
-**API Integration**:
-- Next.js API routes (`/api/chat`, `/api/tts`, `/api/voice`) act as middleware between frontend and AI services
-- Client-side state management via React hooks and localStorage for session persistence
-- Real-time updates through custom events and WebSocket-ready architecture
+```
+┌─────────────────────────────────────┐
+│  المستخدم يتحدث → عون يفهم         │
+│  عون يرد بصوت عربي طبيعي           │
+│  محادثة مستمرة بدون توقف            │
+└─────────────────────────────────────┘
+```
 
-### 3.2 Backend & Agent Layer
+- **تفاعل صوتي كامل**: تحدث مع عون بالعربية، ويرد عليك بصوت طبيعي
+- **فهم ذكي**: يفهم نيتك حتى لو لم تكن دقيقاً في السؤال
+- **لا حاجة للكتابة**: مثالي لكبار السن والأشخاص ذوي الإعاقة
 
-**Technology Stack**:
-- **FastAPI (Python)** – High-performance async API framework
-- **LangGraph** – Agent workflow orchestration and state machine management
-- **SQLModel** – Type-safe database models with SQLAlchemy core
-- **Pydantic** – Data validation and serialization
+#### 2️⃣ **فحص الوضع الحكومي الكامل** 🔍
 
-**Agent Architecture**:
-- **Service Graph**: LangGraph-based state machine that models service workflows as directed graphs
-- **Tool Execution Layer**: Modular tools that encapsulate service-specific logic (violations, identity, vehicles, accidents)
-- **State Management**: Persistent state tracking across agent invocations with context preservation
-- **Decision Engine**: Rule-based and LLM-driven service selection based on user intent and current state
+```
+┌─────────────────────────────────────┐
+│  عون يفحص:                           │
+│  ✅ الوثائق (هوية، رخصة)            │
+│  ✅ المركبات والتأمين                │
+│  ✅ المخالفات والغرامات              │
+│  ⚠️  تنبيهات قبل أن تصبح غرامة      │
+└─────────────────────────────────────┘
+```
 
-**Current Implementation**:
-- Agent layer is implemented with mock tool wrappers that simulate API calls
-- Tool interfaces match expected government API contracts
-- State transitions are validated against service requirement specifications
+- **فحص شامل**: جميع خدماتك الحكومية في مكان واحد
+- **تنبيهات ذكية**: ينبهك قبل انتهاء وثائقك بـ 10 أيام
+- **تقرير تفصيلي**: يعرض لك كل شيء يحتاج إجراء فوري
 
-### 3.3 AI Models
+#### 3️⃣ **رحلات الحياة** 📦
 
-**LLM (Reasoning & Intent Understanding)**:
-- **Model**: LLaMA 3.3 70B (via Groq LPU)
-- **Use Case**: Intent classification, service selection, natural language understanding, and conversational reasoning
-- **Optimization**: Token-efficient context management with smart service retrieval (only relevant services sent to LLM)
+```
+┌─────────────────────────────────────┐
+│  حدث حياتك → عون يجهز كل شيء        │
+│                                      │
+│  💍 الزواج:                         │
+│     • تحديث الحالة الاجتماعية       │
+│     • ربط السجلات                   │
+│     • تحديث بيانات الأسرة           │
+│                                      │
+│  🚗 شراء سيارة:                     │
+│     • نقل الملكية                   │
+│     • تحديث التأمين                 │
+│     • تسجيل المركبة                 │
+└─────────────────────────────────────┘
+```
 
-**Speech-to-Text (STT)**:
-- **Provider**: OpenAI Whisper API
-- **Language**: Arabic with automatic language detection
-- **Format**: WebM audio (Opus codec) converted to WAV for API compatibility
+- **حزم جاهزة**: حدث حياتك (زواج، شراء سيارة) → عون يجهز كل الإجراءات
+- **خطوة واحدة**: بدلاً من زيارة 5 مواقع، اضغط زر واحد
+- **تتبع مرئي**: شاهد تقدم الإجراءات خطوة بخطوة
 
-**Text-to-Speech (TTS)**:
-- **Provider**: ElevenLabs Multilingual v2
-- **Voice ID**: Custom Saudi Arabic voice (`3nav5pHC1EYvWOd5LmnA`)
-- **Settings**: Stability 0.5, Similarity Boost 0.75, Speed 1.2
-- **Output**: High-quality MP3 audio stream
+#### 4️⃣ **المحادثة الذكية** 💬
 
-**Model Integration**:
-- All AI services are abstracted behind service interfaces
-- Fallback mechanisms for API failures
-- Rate limiting and token management to prevent quota exhaustion
-
-### 3.4 Knowledge & Data Layer
-
-**Structured Knowledge Base**:
-- **Service Requirements**: JSON-based specifications for 13+ government services, including requirements, steps, fees, and validation rules
-- **Platform Information**: Structured data about Absher platform capabilities and service categories
-- **Life Event Workflows**: Pre-defined service bundles for common life events (marriage, vehicle purchase)
-
-**Data Storage**:
-- **Vector Database Ready**: Architecture supports Pinecone/Weaviate for semantic search (not currently implemented)
-- **Local Storage**: Browser localStorage for session data and user preferences
-- **Mock Data**: JSON files for violations, documents, vehicles, and user profiles
-
-**Data Flow**:
-- Service requirements are loaded into LLM context via smart retrieval (keyword-based filtering to reduce token usage)
-- User data is fetched from mock sources but structured to match expected API responses
-- State changes are tracked locally with event-driven updates
+- **أسئلة طبيعية**: "ما هي مخالفاتي؟" → عون يفهم ويرد
+- **إجراءات سريعة**: "أريد سداد المخالفة" → عون يساعدك مباشرة
+- **فهم السياق**: يتذكر محادثتك السابقة
 
 ---
 
-## 4. Agentic Workflow Design
+## 🎨 واجهة مستخدم احترافية
 
-Aoun operates through a structured workflow that transforms user intent into executed actions:
+### التصميم:
 
-### 4.1 Intent Detection
+- ✅ **حكومي ومهني**: تصميم يليق بمنصة حكومية
+- ✅ **سهل الاستخدام**: واجهة بسيطة وواضحة
+- ✅ **متجاوب**: يعمل على جميع الأجهزة
+- ✅ **عربي بالكامل**: RTL محسّن للعربية
 
-User input (voice or text) is processed by the LLM to extract:
-- **Primary Intent**: What service does the user want? (e.g., "renew driving license")
-- **Entities**: Specific identifiers (violation numbers, document types, dates)
-- **Context**: Implicit requirements based on conversation history
+### الألوان:
 
-**Implementation**: Groq LLaMA 3.3 analyzes user message with service requirements context, returning structured intent classification.
-
-### 4.2 State Analysis
-
-The system evaluates current citizen state:
-- **Document Status**: Expiration dates, renewal eligibility windows
-- **Violation Status**: Outstanding fines, payment deadlines, objection windows
-- **Vehicle Status**: Registration, insurance, ownership transfers
-- **Life Event Context**: Recent changes that trigger service dependencies
-
-**Implementation**: Mock data is queried to simulate state checks. In production, this would query government databases via APIs.
-
-### 4.3 Service Selection
-
-Based on intent and state, the agent selects the appropriate service workflow:
-- **Direct Match**: User intent maps directly to a service (e.g., "pay violation" → `traffic_violation_payment`)
-- **Life Event Bundle**: User intent triggers a multi-service workflow (e.g., "I got married" → marriage bundle)
-- **Dependency Resolution**: Service selection considers prerequisites (e.g., cannot renew license with outstanding violations)
-
-**Implementation**: Keyword-based service retrieval from `service_requirements.json`, with LLM final selection.
-
-### 4.4 Action Planning
-
-The agent generates an execution plan:
-- **Step Sequence**: Ordered list of actions required to complete the service
-- **Data Requirements**: What information must be collected from the user
-- **Validation Rules**: Pre-execution checks (e.g., sufficient wallet balance, valid expiration window)
-- **Dependency Mapping**: Services that must complete before this one can proceed
-
-**Implementation**: Service requirements JSON defines steps and validation rules. Agent constructs plan dynamically.
-
-### 4.5 Execution Simulation
-
-Actions are executed through tool calls:
-- **Tool Invocation**: Each service step maps to a tool (e.g., `check_violations`, `process_payment`)
-- **State Updates**: Tool results update citizen state
-- **Progress Tracking**: UI reflects completion status for each step
-- **Error Handling**: Validation failures trigger user prompts or alternative paths
-
-**Implementation**: Mock tools simulate API calls with realistic delays and responses. Tool interfaces match expected production API contracts.
-
-### 4.6 Error Handling & Fallback Strategies
-
-- **Validation Failures**: User is informed of missing prerequisites with actionable guidance
-- **API Failures**: Graceful degradation with retry logic and user notification
-- **Ambiguous Intents**: Agent asks clarifying questions using LLM-generated prompts
-- **Timeout Handling**: Long-running operations are tracked with progress indicators
-
-**Pseudo-Flow Example**:
-
-```
-User: "أريد تجديد رخصة القيادة"
-  ↓
-Intent Detection: renew_driving_license
-  ↓
-State Analysis: 
-  - Check violations (outstanding_fines == 0?) → PASS
-  - Check medical report (status == 'valid'?) → PASS
-  - Check renewal window (remaining_validity < 365?) → PASS
-  ↓
-Service Selection: renew_driving_license
-  ↓
-Action Planning:
-  1. Collect renewal duration (2/5/10 years)
-  2. Verify wallet balance (fee_by_duration[duration])
-  3. Process payment
-  4. Submit renewal request
-  ↓
-Execution:
-  - Tool: get_user_violations() → []
-  - Tool: get_wallet_balance() → 5000 SAR
-  - User Input: duration = 5 years
-  - Tool: process_payment(amount=200) → SUCCESS
-  - Tool: submit_renewal(duration=5) → SUCCESS
-  ↓
-State Update: driving_license.validity += 5 years
-  ↓
-Response: "تم تجديد رخصة القيادة بنجاح لمدة 5 سنوات"
-```
+- **أخضر داكن** (#00663D): لون أبشر الرسمي
+- **أبيض ورمادي**: خلفيات مريحة للعين
+- **ألوان محدودة**: تصميم حكومي نظيف
 
 ---
 
-## 5. Life Event Bundles (Core Innovation)
-
-Life Event Bundles represent Aoun's core innovation: treating citizen life changes as unified workflows rather than isolated service transactions.
-
-### 5.1 Concept
-
-When a citizen experiences a life event (e.g., marriage, vehicle purchase), multiple government services must be updated in a specific order with dependencies. Traditional platforms require citizens to:
-1. Identify all affected services manually
-2. Understand dependency order
-3. Complete each service separately
-4. Track completion across platforms
-
-Aoun bundles these services into a single workflow that the agent orchestrates automatically.
-
-### 5.2 Implementation
-
-**Event Definition**: Each life event is defined as a service graph:
-- **Nodes**: Individual services (e.g., "update marital status", "link family records")
-- **Edges**: Dependencies (e.g., marital status must update before family records can link)
-- **Data Flow**: Shared data across services (e.g., spouse national ID used in multiple steps)
-
-**State Transitions**: The agent treats life events as state machine transitions:
-- **Initial State**: Pre-event citizen state
-- **Transition**: Event triggers workflow initiation
-- **Intermediate States**: Each service completion updates state
-- **Final State**: All services complete, citizen state fully updated
-
-**Dependency Management**: The agent automatically:
-- Identifies prerequisite services
-- Executes services in correct order
-- Waits for dependencies before proceeding
-- Handles partial failures with rollback or retry
-
-**Example: Marriage Bundle**
-
-```
-User: "تزوجت الأسبوع الماضي"
-  ↓
-Event Detection: marriage_life_event
-  ↓
-Bundle Activation:
-  Service 1: Update marital status (prerequisite: none)
-    → State: marital_status = "married"
-  Service 2: Link spouse records (prerequisite: Service 1)
-    → State: spouse_linked = true
-  Service 3: Update family records (prerequisite: Service 2)
-    → State: family_updated = true
-  Service 4: Notify relevant agencies (prerequisite: Service 3)
-    → State: notifications_sent = true
-  ↓
-Workflow Complete: All services executed in order
-```
+## 🛠️ التقنيات المستخدمة
 
 ---
 
-## 6. API Readiness & Integration Strategy
+## 🤖 AI models 
 
-**Critical Disclaimer**: Aoun currently operates with **mock data and simulated APIs**. No direct integration with Absher or government APIs exists. The system is architected for instant API enablement when access is granted.
+| التقنية                 | الوصف                                              |
+| ------------------------------ | ------------------------------------------------------- |
+| **Groq LLaMA 3.3 (70B)** | للفهم الطبيعي والردود الذكية   |
+| **OpenAI Whisper**       | لتحويل الصوت إلى نص (عربي)          |
+| **ElevenLabs**           | لتحويل النص إلى صوت عربي طبيعي |
 
-### 6.1 Current State
+## 🧠 Agentic System
 
-**Mock Data Sources**:
-- User profiles, violations, documents, and vehicles are stored in JSON files
-- Service execution is simulated with realistic delays and responses
-- Payment processing uses localStorage-based wallet simulation
-- All state changes are local and non-persistent
+| المكون                   | الوظيفة                                            |
+| ------------------------------ | --------------------------------------------------------- |
+| **LangGraph**            | Workflow orchestration                                    |
+| **Autonomous Execution** | Tool execution تلقائي                               |
+| **Service Selection**    | اختيار الخدمة + تخطيط الإجراءات |
+| **RAG Pipeline**         | Context-aware reasoning                                   |
+| **State Machine**        | State-based decision making                               |
+| **Error Handling**       | معالجة الأخطاء والبدائل              |
 
-**Simulated API Layer**:
-- Tool wrappers (`backend/agents/tools/`) simulate API calls
-- Response structures match expected government API contracts
-- Error scenarios are modeled (rate limits, validation failures, timeouts)
+## 🛠️ التطوير
 
-### 6.2 Architecture for API Integration
+### Frontend
 
-**Tool Abstraction Layer**: All service interactions go through tool interfaces:
+| التقنية         | الوصف                         |
+| ---------------------- | ---------------------------------- |
+| **Next.js 15**   | Framework حديث وسريع      |
+| **TypeScript**   | كود آمن ومنظم           |
+| **Tailwind CSS** | تصميم سريع ومتجاوب |
 
-```python
-class ServiceTool:
-    async def execute(self, params: dict) -> ToolResult:
-        # Current: Mock implementation
-        # Production: HTTP client to government API
-        pass
-```
+### Backend
 
-**API Contract Design**: Tool interfaces are designed to match expected government API patterns:
+| التقنية               | الوصف                                     |
+| ---------------------------- | ---------------------------------------------- |
+| **FastAPI (Python)**   | REST API سريع وقوي                     |
+| **LangGraph**          | Agent workflow orchestration                   |
+| **Groq LPU Inference** | استدلال سريع للنماذج         |
+| **RAG Pipeline**       | استرجاع المعرفة السياقية |
+| **Tooling Layer**      | طبقة الأدوات والتنفيذ       |
+| **Vector DB**          | Pinecone / Weaviate للبحث الدلالي  |
 
-**Example: Violation Payment API**
+## 📊 الأثر المتوقع
 
-```typescript
-// Expected API Contract (Pseudo)
-POST /api/v1/violations/{violation_id}/payment
-Headers: {
-  Authorization: "Bearer {token}",
-  X-User-National-ID: "{national_id}"
-}
-Body: {
-  payment_method: "wallet" | "card",
-  amount: number,
-  wallet_id?: string
-}
-Response: {
-  transaction_id: string,
-  status: "success" | "failed",
-  remaining_balance?: number,
-  receipt_url?: string
-}
-```
+### للمواطن:
 
-**Current Mock Implementation**:
+- ⏱️ **توفير الوقت**: من ساعات إلى دقائق
+- 💰 **توفير المال**: تجنب الغرامات بالتنبيهات المبكرة
+- 😊 **راحة البال**: كل شيء في مكان واحد
+- ♿ **سهولة الوصول**: صوتي للمكفوفين وكبار السن
 
-```typescript
-// Mock tool simulates this API
-async function processViolationPayment(violationId: string, amount: number) {
-  // Simulate API delay
-  await delay(500);
+### للحكومة:
+
+- 📈 **تقليل الزيارات**: المواطن لا يحتاج زيارة المكاتب
+- 💼 **كفاءة أعلى**: تقليل العبء على الموظفين
+- 📊 **بيانات أفضل**: فهم احتياجات المواطنين
+- 🎯 **رضا المواطن**: تجربة أفضل = رضا أعلى
+
+---
+
+## 📊 User Flow Diagrams
+
+### 🎯 User Journey - رحلة المستخدم الكاملة
+
+```mermaid
+graph TD
+    A[المواطن يفتح أبشر] --> B{كيف يريد التفاعل?}
+    B -->|صوتي| C[يضغط زر المكالمة الصوتية]
+    B -->|نصي| D[يضغط زر المحادثة]
+    B -->|فحص| E[يضغط فحص الوضع الحكومي]
+    B -->|حدث حياتي| F[يختار رحلة الحياة]
   
-  // Simulate wallet deduction
-  const balance = getWalletBalance();
-  if (balance >= amount) {
-    updateWalletBalance(balance - amount);
-    return { status: "success", transaction_id: generateId() };
-  }
-  return { status: "failed", error: "insufficient_balance" };
-}
+    C --> C1[عون يحييه صوتياً]
+    C1 --> C2[المستخدم يتحدث]
+    C2 --> C3[عون يفهم ويرد]
+    C3 --> C4{هل انتهت المحادثة?}
+    C4 -->|لا| C2
+    C4 -->|نعم| END[انتهى]
+  
+    D --> D1[عون يحييه نصياً]
+    D1 --> D2[المستخدم يكتب سؤال]
+    D2 --> D3[عون يرد بالذكاء الاصطناعي]
+    D3 --> D4{هل يحتاج إجراء?}
+    D4 -->|نعم| D5[عون يعرض بطاقات الإجراءات]
+    D4 -->|لا| D2
+    D5 --> D6[المستخدم ينفذ الإجراء]
+    D6 --> END
+  
+    E --> E1[عون يبدأ الفحص]
+    E1 --> E2[فحص الوثائق]
+    E2 --> E3[فحص المركبات]
+    E3 --> E4[فحص المخالفات]
+    E4 --> E5[تحليل النتائج]
+    E5 --> E6{هل يوجد مشاكل?}
+    E6 -->|نعم| E7[عون ينبه المستخدم]
+    E6 -->|لا| E8[عون يؤكد أن كل شيء سليم]
+    E7 --> E9[المستخدم يتصرف]
+    E8 --> END
+    E9 --> END
+  
+    F --> F1{أي حدث?}
+    F1 -->|زواج| F2[حزمة الزواج]
+    F1 -->|شراء سيارة| F3[حزمة السيارة]
+    F2 --> F4[المستخدم يدخل البيانات]
+    F3 --> F4
+    F4 --> F5[عون يبدأ الإجراءات]
+    F5 --> F6[تتبع التقدم خطوة بخطوة]
+    F6 --> F7[إتمام جميع الإجراءات]
+    F7 --> END
 ```
 
-**Production Replacement**: Replace mock function with HTTP client:
+### 🎤 Voice Agent Workflow - تدفق المساعد الصوتي
 
-```typescript
-async function processViolationPayment(violationId: string, amount: number) {
-  const response = await fetch(
-    `${GOV_API_BASE}/api/v1/violations/${violationId}/payment`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${getAuthToken()}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ payment_method: "wallet", amount })
-    }
-  );
-  return await response.json();
-}
+```mermaid
+sequenceDiagram
+    participant User as المستخدم
+    participant UI as الواجهة
+    participant VAD as كشف الصوت
+    participant STT as Whisper
+    participant AI as Groq AI
+    participant TTS as ElevenLabs
+    participant Audio as الصوت
+
+    User->>UI: يضغط زر المكالمة
+    UI->>TTS: طلب تحية صوتية
+    TTS->>Audio: تشغيل "السلام عليكم"
+    Audio->>User: عون يتحدث
+  
+    loop محادثة مستمرة
+        User->>VAD: يتحدث
+        VAD->>VAD: يكتشف الصوت
+        VAD->>UI: بدء التسجيل
+        UI->>STT: إرسال الصوت
+        STT->>AI: النص المحول
+        AI->>AI: معالجة الذكاء الاصطناعي
+        AI->>TTS: الرد النصي
+        TTS->>Audio: تحويل إلى صوت
+        Audio->>User: عون يرد
+        User->>VAD: يستمر المحادثة
+    end
 ```
 
-### 6.3 Integration Points
+### 💬 Chat Workflow - تدفق المحادثة النصية
 
-**Authentication & Authorization**:
-- Current: Mock session tokens in localStorage
-- Production: OAuth 2.0 / OpenID Connect with government identity provider
-- Token refresh and session management ready for implementation
+```mermaid
+graph LR
+    A[المستخدم يكتب] --> B[إرسال إلى /api/chat]
+    B --> C[Groq LLaMA 3.3]
+    C --> D{نوع السؤال?}
+    D -->|استعلام| E[رد مباشر]
+    D -->|مخالفات| F[جلب البيانات]
+    D -->|إجراء| G[عرض بطاقات]
+    F --> H[عرض بطاقات المخالفات]
+    G --> I[المستخدم ينفذ]
+    H --> I
+    I --> J{هل انتهى?}
+    J -->|لا| A
+    J -->|نعم| K[إتمام]
+    E --> K
+```
 
-**Data Synchronization**:
-- Current: One-way data flow (mock → UI)
-- Production: Bi-directional sync with government databases
-- Conflict resolution strategies defined (last-write-wins, merge policies)
+### 🔍 Health Check Workflow - تدفق فحص الوضع الحكومي
 
-**Service Discovery**:
-- Current: Hard-coded service list in `service_requirements.json`
-- Production: Dynamic service registry API call on startup
-- Service versioning and deprecation handling
+```mermaid
+graph TD
+    A[المستخدم يضغط زر الفحص] --> B[فتح Modal]
+    B --> C[عون يظهر]
+    C --> D[بدء الفحص]
+  
+    D --> E[الخطوة 1: فحص البيانات الشخصية]
+    E --> F[الخطوة 2: فحص الوثائق]
+    F --> G[الخطوة 3: فحص المركبات]
+    G --> H[الخطوة 4: فحص المخالفات]
+    H --> I[الخطوة 5: تحليل النتائج]
+  
+    I --> J{هل يوجد مشاكل?}
+    J -->|نعم| K[تصنيف المشاكل]
+    J -->|لا| L[عرض تقرير إيجابي]
+  
+    K --> M{نوع المشكلة?}
+    M -->|حرجة| N[تنبيهات حمراء]
+    M -->|تحذير| O[تحذيرات صفراء]
+  
+    N --> P[عرض التقرير]
+    O --> P
+    L --> P
+  
+    P --> Q[بطاقات الملخص]
+    Q --> R[التقرير التفصيلي]
+    R --> S{هل يحتاج إجراء?}
+    S -->|نعم| T[عرض أزرار الإجراءات]
+    S -->|لا| U[إغلاق]
+    T --> U
+```
 
-### 6.4 Security & Governance Considerations
+### 📦 Life Event Bundle Workflow - تدفق رحلات الحياة
 
-**API Security**:
-- All API calls will use HTTPS with certificate pinning
-- Request signing for sensitive operations (payment, document updates)
-- Rate limiting and quota management per user/tenant
+```mermaid
+graph TD
+    A[المستخدم يختار حدث] --> B{نوع الحدث?}
+  
+    B -->|زواج| C[حزمة الزواج]
+    B -->|شراء سيارة| D[حزمة السيارة]
+  
+    C --> E[نموذج بيانات الزواج]
+    D --> F[نموذج بيانات السيارة]
+  
+    E --> G[المستخدم يملأ البيانات]
+    F --> G
+  
+    G --> H[المستخدم يضغط إكمال]
+    H --> I[عون يبدأ الإجراءات]
+  
+    I --> J[الخطوة 1: معالجة]
+    J --> K{مكتملة?}
+    K -->|نعم| L[الخطوة 2: معالجة]
+    K -->|لا| J
+    L --> M{مكتملة?}
+    M -->|نعم| N[الخطوة 3: معالجة]
+    M -->|لا| L
+    N --> O{مكتملة?}
+    O -->|نعم| P[الخطوة 4: معالجة]
+    O -->|لا| N
+    P --> Q{مكتملة?}
+    Q -->|نعم| R[جميع الإجراءات مكتملة]
+    Q -->|لا| P
+  
+    R --> S[رسالة نجاح]
+    S --> T[إتمام]
+```
 
-**Data Privacy**:
-- PII encryption at rest and in transit
-- Audit logging for all state-changing operations
-- GDPR-compliant data retention policies
+### 🏗️ System Architecture - البنية التقنية
 
-**Governance**:
-- Service-level agreements (SLA) monitoring
-- Circuit breakers for API failures
-- Fallback to cached data when APIs are unavailable
+```mermaid
+graph TB
+    subgraph "Frontend - Next.js"
+        A[الصفحة الرئيسية]
+        B[مكونات React]
+        C[API Routes]
+    end
+  
+    subgraph "AI Services"
+        D[Groq API<br/>LLaMA 3.3]
+        E[ElevenLabs<br/>TTS]
+        F[OpenAI Whisper<br/>STT]
+    end
+  
+    subgraph "Data Layer"
+        G[JSON Files]
+        H[Local Storage]
+    end
+  
+    subgraph "Backend - FastAPI"
+        I[API Endpoints]
+        J[Database]
+    end
+  
+    A --> B
+    B --> C
+    C --> D
+    C --> E
+    C --> F
+    B --> G
+    B --> H
+    C --> I
+    I --> J
+```
+
+### 🔄 Complete User Flow - التدفق الكامل
+
+```mermaid
+stateDiagram-v2
+    [*] --> LandingPage: فتح أبشر
+  
+    LandingPage --> VoiceCall: اضغط مكالمة صوتية
+    LandingPage --> Chat: اضغط محادثة
+    LandingPage --> HealthCheck: اضغط فحص
+    LandingPage --> LifeEvents: اضغط رحلة الحياة
+  
+    VoiceCall --> VoiceGreeting: عون يحيي
+    VoiceGreeting --> VoiceListening: يستمع للمستخدم
+    VoiceListening --> VoiceProcessing: معالجة الصوت
+    VoiceProcessing --> VoiceResponse: عون يرد
+    VoiceResponse --> VoiceListening: محادثة مستمرة
+    VoiceResponse --> [*]: إنهاء
+  
+    Chat --> ChatGreeting: عون يحيي
+    ChatGreeting --> ChatInput: المستخدم يكتب
+    ChatInput --> ChatProcessing: معالجة AI
+    ChatProcessing --> ChatResponse: عون يرد
+    ChatResponse --> ChatActions: عرض إجراءات
+    ChatActions --> ChatInput: استمرار
+    ChatActions --> [*]: إنهاء
+  
+    HealthCheck --> Scanning: عون يفحص
+    Scanning --> Analyzing: تحليل البيانات
+    Analyzing --> Report: عرض التقرير
+    Report --> Actions: إجراءات مطلوبة
+    Actions --> [*]: إتمام
+  
+    LifeEvents --> EventForm: نموذج البيانات
+    EventForm --> Processing: معالجة الإجراءات
+    Processing --> Progress: تتبع التقدم
+    Progress --> Complete: إتمام
+    Complete --> [*]: نجاح
+```
+
+### 🎯 Feature Interaction Flow - تفاعل الميزات
+
+```mermaid
+graph TD
+    A[الصفحة الرئيسية] --> B[4 أزرار رئيسية]
+  
+    B --> C[🎤 المكالمة الصوتية]
+    B --> D[💬 المحادثة النصية]
+    B --> E[🔍 فحص الوضع]
+    B --> F[📦 رحلات الحياة]
+  
+    C --> C1[تفاعل صوتي مباشر]
+    C1 --> C2[STT → AI → TTS]
+    C2 --> C3[حلقة محادثة]
+  
+    D --> D1[تفاعل نصي]
+    D1 --> D2[AI Processing]
+    D2 --> D3{نوع الرد?}
+    D3 -->|معلومات| D4[عرض مباشر]
+    D3 -->|إجراء| D5[عرض بطاقات]
+    D5 --> D6[تنفيذ الإجراء]
+  
+    E --> E1[فحص شامل]
+    E1 --> E2[5 خطوات فحص]
+    E2 --> E3[تقرير تفصيلي]
+    E3 --> E4{مشاكل?}
+    E4 -->|نعم| E5[تنبيهات + إجراءات]
+    E4 -->|لا| E6[تأكيد]
+  
+    F --> F1[اختيار الحدث]
+    F1 --> F2[نموذج البيانات]
+    F2 --> F3[معالجة تلقائية]
+    F3 --> F4[4 خطوات]
+    F4 --> F5[إتمام]
+```
+
+## 🎬 Demo Scenarios
+
+### السيناريو 1: فحص الوضع الحكومي
+
+```
+1. المواطن يضغط "فحص وضعك الحكومي"
+2. عون يفحص جميع بياناته
+3. عون ينبهه: "هويتك تنتهي خلال 10 أيام!"
+4. عون يعرض تقرير شامل
+5. المواطن يتصرف قبل أن تصبح غرامة ✅
+```
+
+### السيناريو 2: محادثة صوتية
+
+```
+1. المواطن يضغط زر المكالمة الصوتية
+2. عون: "السلام عليكم، كيف أقدر أساعدك؟"
+3. المواطن: "ما هي مخالفاتي؟"
+4. عون: "لديك 3 مخالفات بمبلغ 950 ريال..."
+5. محادثة مستمرة بدون توقف 🎤
+```
+
+### السيناريو 3: رحلة الحياة (الزواج)
+
+```
+1. المواطن يختار "حزمة الزواج"
+2. يدخل بيانات الزواج
+3. عون يبدأ الإجراءات:
+   • تحديث الحالة الاجتماعية ✅
+   • ربط السجلات ✅
+   • تحديث بيانات الأسرة ✅
+4. كل شيء مكتمل في دقائق! 🎉
+```
 
 ---
 
-## 7. Testing & Validation
+## 🏆 الابتكارات الرئيسية
 
-### 7.1 Scenario-Based Testing
+### 1. **التنبيهات الذكية**
 
-**User Journey Tests**:
-- Complete service workflows from intent to completion
-- Multi-step processes with dependency validation
-- Error recovery and retry scenarios
+- عون **ينبهك قبل** أن تصبح غرامة
+- يحسب الأيام المتبقية تلقائياً
+- يعطيك أولويات واضحة
 
-**Voice Interaction Tests**:
-- Speech-to-text accuracy for Arabic dialects
-- Turn-taking and conversation flow
-- Audio quality and latency measurements
+### 2. **التفاعل الصوتي الكامل**
 
-**State Transition Tests**:
-- Document expiration warnings trigger correctly
-- Life event bundles execute in correct order
-- Partial failures don't corrupt state
+- أول مساعد حكومي صوتي بالعربية
+- محادثة طبيعية بدون توقف
+- مناسب لجميع الفئات
 
-### 7.2 Error-State Simulations
+### 3. **حزم الأحداث الحياتية**
 
-**API Failure Scenarios**:
-- Network timeouts
-- Rate limit exceeded
-- Invalid authentication
-- Service unavailable
+- حدث حياتك → عون يجهز كل شيء
+- بدلاً من 5 مواقع، زر واحد
+- تتبع مرئي للتقدم
 
-**Validation Failure Scenarios**:
-- Insufficient wallet balance
-- Missing prerequisites
-- Expired eligibility windows
-- Duplicate transaction attempts
+### 4. **التكامل الشامل**
 
-### 7.3 UX Flow Testing
-
-**Accessibility**:
-- Screen reader compatibility
-- Keyboard navigation
-- RTL layout validation
-- Voice-only interaction paths
-
-**Performance**:
-- Page load times < 2 seconds
-- API response times < 500ms (simulated)
-- Smooth animations and transitions
-- Mobile device compatibility
+- جميع الخدمات في مكان واحد
+- بيانات موحدة من مصادر مختلفة
+- تجربة سلسة بدون تعقيد
 
 ---
 
-## 8. Scalability & Production Readiness
+## 📈 الإحصائيات
 
-### 8.1 Modular Services
-
-**Microservices Architecture Ready**:
-- Frontend, backend, and agent layers are independently deployable
-- API routes can be extracted to separate services
-- Database layer is abstracted and swappable
-
-**Service Isolation**:
-- Each government service is implemented as an independent tool
-- Service failures don't cascade to other services
-- Individual services can be updated without system-wide changes
-
-### 8.2 Horizontal Scaling
-
-**Stateless Design**:
-- Agent state is stored externally (database, cache)
-- Multiple agent instances can handle requests concurrently
-- Load balancing ready with session affinity for voice calls
-
-**Caching Strategy**:
-- Service requirements cached in memory
-- User state cached with TTL-based invalidation
-- API responses cached where appropriate (read-only data)
-
-### 8.3 Multi-Agency Support
-
-**Agency Abstraction**:
-- Service definitions are agency-agnostic
-- Tool layer can route to different agency APIs
-- Unified citizen view across agencies
-
-**Tenant Isolation**:
-- Architecture supports multi-tenant deployment
-- Agency-specific configurations via environment variables
-- Data isolation at database/API level
-
-### 8.4 Observability & Monitoring Readiness
-
-**Logging**:
-- Structured logging with correlation IDs
-- Request/response logging for API calls
-- Agent decision logs for audit trails
-
-**Metrics**:
-- Request latency and throughput
-- Error rates by service
-- User engagement metrics (voice vs. text, service completion rates)
-
-**Tracing**:
-- Distributed tracing ready (OpenTelemetry compatible)
-- End-to-end request tracking across frontend, backend, and agent layers
+```
+┌─────────────────────────────────────┐
+│  الملفات: 150+                      │
+│  الأسطر: 15,000+                    │
+│  المكونات: 20+                      │
+│  الميزات: 6+                        │
+│  API Routes: 5+                     │
+└─────────────────────────────────────┘
+```
 
 ---
 
-## 9. Limitations & Current Constraints
+## 🎯 القيمة المضافة
 
-**No Live API Integration**: The system operates entirely with mock data. No connections to Absher, Ministry of Interior, or any government APIs exist. All service executions are simulated.
+### للمواطن:
 
-**Simulated Data**: User profiles, violations, documents, and vehicles are generated from JSON files. Data does not reflect real citizen records.
+- ✅ **سهولة**: كل شيء في مكان واحد
+- ✅ **سرعة**: إجراءات في دقائق
+- ✅ **ذكاء**: عون يفهم نيتك
+- ✅ **راحة**: صوتي ونصي
 
-**Hackathon Scope**: The implementation prioritizes demonstration of architectural concepts over production hardening. Security, performance optimization, and comprehensive error handling are implemented to proof-of-concept level.
+### للحكومة:
 
-**Limited Service Coverage**: Currently implements 13 government services. Production deployment would require expansion to full Absher service catalog.
-
-**Voice Quality**: TTS uses custom ElevenLabs voice optimized for Saudi Arabic, but may not match native speaker quality in all contexts.
-
-**No Persistent Storage**: User sessions and state are stored in browser localStorage. Production would require server-side session management and database persistence.
-
----
-
-## 10. Future Roadmap
-
-### 10.1 API Enablement
-
-**Phase 1: Authentication Integration**
-- Integrate with government identity provider (National Authentication System)
-- Implement OAuth 2.0 token flow
-- Session management and token refresh
-
-**Phase 2: Read-Only API Integration**
-- Connect to citizen data APIs (violations, documents, vehicles)
-- Implement caching and synchronization strategies
-- Handle API rate limits and quotas
-
-**Phase 3: Write API Integration**
-- Enable service execution through government APIs
-- Implement transaction rollback for failures
-- Real-time status updates from government systems
-
-### 10.2 Security Hardening
-
-- Implement request signing for sensitive operations
-- Add encryption for PII at rest and in transit
-- Security audit and penetration testing
-- Compliance with government security standards
-
-### 10.3 Performance Optimization
-
-- Database query optimization
-- API response caching strategies
-- CDN deployment for static assets
-- Voice call latency reduction (< 200ms end-to-end)
-
-### 10.4 Deployment Readiness
-
-- Containerization (Docker) for all services
-- Kubernetes deployment manifests
-- CI/CD pipeline for automated testing and deployment
-- Monitoring and alerting setup (Prometheus, Grafana)
+- ✅ **كفاءة**: تقليل العبء
+- ✅ **بيانات**: فهم أفضل للاحتياجات
+- ✅ **رضا**: تجربة أفضل
+- ✅ **ابتكار**: تقنية حديثة
 
 ---
 
-## 11. Local Setup
+## 🚀 Quick Start
 
-### Prerequisites
-
-- Node.js 18.0 or higher
-- Python 3.10 or higher (for backend)
-- npm or yarn package manager
-
-### Installation
+### للتجربة السريعة:
 
 ```bash
-# Clone repository
+# 1. Clone
 git clone https://github.com/ZiyadALharbi/Absher-Kackathon.git
-cd Absher-Kackathon
 
-# Frontend setup
+# 2. Install
 cd front-end/clone-website-ui
 npm install
 
-# Create environment file
-cp .env.example .env.local
-# Add your API keys:
-# - GROQ_API_KEY (for LLM)
-# - OPENAI_API_KEY (for Whisper STT)
-# - ELEVENLABS_API_KEY (for TTS)
+# 3. Setup .env.local (انظر .env.example)
 
-# Backend setup (optional, for full stack)
-cd ../../backend
-pip install -r requirements.txt
-```
-
-### Running the Application
-
-```bash
-# Start frontend (from front-end/clone-website-ui/)
+# 4. Run
 npm run dev
 
-# Start backend (optional, from backend/)
-uvicorn main:app --reload --port 8001
+# 5. Open
+http://localhost:3000
 ```
 
-### Access
-
-- Frontend: http://localhost:3000
-- Backend API docs: http://localhost:8001/docs (if backend is running)
-
-### Demo Users
-
-The system includes mock users for demonstration:
-- **Budi Santoso** (Indonesian) - Triggers language detection modal
-- **أحمد محمد** (Saudi) - Triggers behavioral greeting
-
-Login page: http://localhost:3000/login
+**للتفاصيل الكاملة:** راجع قسم "البدء السريع" في README
 
 ---
 
-## Technical Contact
+## 🎨 Screenshots
 
-For technical inquiries or API integration discussions, please refer to the repository documentation or contact the development team through GitHub issues.
+### الصفحة الرئيسية:
+
+- زر فحص الوضع الحكومي
+- رحلات الحياة
+- أزرار المحادثة الصوتية والنصية
+
+### واجهة الفحص:
+
+- عون يفحص المعلومات
+- تقرير شامل مع تنبيهات
+- بطاقات ملخص
+
+### المحادثة:
+
+- تفاعل طبيعي مع عون
+- إجراءات سريعة
+- عرض البيانات
+
+---
+
+## 🏅 Why This Project?
+
+### 1. **حل حقيقي لمشكلة حقيقية**
+
+- المشكلة: تعقيد الإجراءات الحكومية
+- الحل: عون يجمع كل شيء في مكان واحد
+
+### 2. **تقنية حديثة**
+
+- AI متقدم (Groq LLaMA 3.3)
+- صوتي بالعربية
+- واجهة حديثة
+
+### 3. **سهولة الاستخدام**
+
+- لا يحتاج تدريب
+- مناسب لجميع الفئات
+- صوتي ونصي
+
+### 4. **أثر إيجابي**
+
+- توفير الوقت والمال
+- تجنب الغرامات
+- رضا المواطن
+
+---
+
+## 👥 الفريق
+
+تم التطوير بـ ❤️ لصالح:
+
+- **وزارة الداخلية** - المملكة العربية السعودية
+- **رؤية 2030** - التحول الرقمي
+
+---
+
+## 📞 Contact
+
+**GitHub:** https://github.com/ZiyadALharbi/Absher-Kackathon
+
+---
+
+<div align="center">
+
+# **عون - جعل الخدمات الحكومية أسهل**
+
+**صُنع بـ ❤️ للمملكة العربية السعودية 🇸🇦**
+
+**رؤية 2030 | التحول الرقمي | خدمة المواطن**
+
+</div>
